@@ -52,3 +52,7 @@ docs/_build/
 
 # PyBuilder
 target/
+*.png
+*.IMG
+*.LBL
+*.ipynb_checkpoints/
