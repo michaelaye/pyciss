@@ -2,6 +2,11 @@ import os
 import gdal
 from pysis.isis import getkey
 import numpy as np
+import json
+from urllib.request import urlopen, unquote
+from urllib.parse import urlparse, urlencode
+import requests
+
 
 HOME = os.environ['HOME']
 
@@ -43,5 +48,55 @@ class RingCube:
 
     def get_data(self):
         data = self.ds.ReadAsArray()
-        data[data<0] = np.nan
+        data[data < 0] = np.nan
         return data
+
+
+class OPUSImage(object):
+    """Manage URLS from the OPUS response."""
+    def __init__(self, jsonlist):
+        self.jsonlist = jsonlist
+        for item in jsonlist:
+            parsed = urlparse(item)
+            if '//' in parsed.path:
+                continue
+            if item.upper().endswith(".LBL"):
+                self.label_url = item
+            elif item.upper().endswith('.IMG'):
+                self.image_url = item
+
+    def __repr__(self):
+        s = "Label:\n{}\nImage:\n{}".format(self.label_url,
+                                            self.image_url)
+        return s
+
+
+class OPUSObsID(object):
+    """Manage observation IDs from OPUS responses."""
+    def __init__(self, obsid_data):
+        self.idname = obsid_data[0]
+        self.raw = OPUSImage(obsid_data[1]['RAW_IMAGE'])
+        self.calib = OPUSImage(obsid_data[1]['CALIBRATED'])
+
+    def __repr__(self):
+        s = "Raw:\n{}\nCalibrated:\n{}".format(self.raw, self.calib)
+        return s
+
+
+class OPUS(object):
+    """Manage OPUS API requests."""
+    base_url = 'http://pds-rings-tools.seti.org/opus/api'
+    files_url = base_url + '/files.json'
+    payload = {'target': 'S+RINGS',
+               'instrumentid': 'Cassini+ISS',
+               'projectedradialresolution1': '',
+               'projectedradialresolution2': '0.5'}
+
+    def send_request(self):
+        r = requests.get(self.files_url,
+                         params=unquote(urlencode(self.payload)))
+        response = r.json()['data']
+        obsids = []
+        for obsid_data in response.items():
+            obsids.append(OPUSObsID(obsid_data))
+        self.obsids = obsids
