@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 # from skimage.exposure import equalize_hist
 from IPython.html.widgets import interact, fixed
 import numpy as np
-import gdal
+# import gdal
 
 
 interpolators = ['none', 'nearest', 'bilinear', 'bicubic',
@@ -16,7 +16,7 @@ def lookup_rcparam(rcParams, pattern):
 
 
 def myimshow(img, vmin, vmax, i, cmap='gray'):
-    fig, ax = plt.subplots(nrows=2, figsize=(10, 10))
+    _, ax = plt.subplots(nrows=2, figsize=(10, 10))
     ax, ax2 = ax
     ax.imshow(img, vmin=vmin, vmax=vmax, aspect='auto',
               interpolation=interpolators[i],
@@ -38,16 +38,16 @@ def myinteract(img):
              vmax=(p70, max_, delta), i=(0, len(interpolators)-1))
 
 
-def gdal_explorer(fnames):
-    def imshow(img_number, vmin, vmax, cmap='gray'):
-        fig, ax = plt.subplots(nrows=2, figsize=(10, 10))
-        ax, ax2 = ax
-        ds = gdal.Open(fnames[img_number])
-        data = ds.ReadAsArray()
-        try:
-            data[data < -2e+38] = np.NaN
-        except ValueError:
-            pass
+# def gdal_explorer(fnames):
+#     def imshow(img_number, vmin, vmax, cmap='gray'):
+#         fig, ax = plt.subplots(nrows=2, figsize=(10, 10))
+#         ax, ax2 = ax
+#         ds = gdal.Open(fnames[img_number])
+#         data = ds.ReadAsArray()
+#         try:
+#             data[data < -2e+38] = np.NaN
+#         except ValueError:
+#             pass
 
 
 def imshowlowhigh(data, low=10, high=90):

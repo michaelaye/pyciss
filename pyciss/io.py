@@ -2,8 +2,7 @@ import os
 import gdal
 from pysis.isis import getkey
 import numpy as np
-import json
-from urllib.request import urlopen, unquote
+from urllib.request import unquote
 from urllib.parse import urlparse, urlencode
 import requests
 
@@ -88,15 +87,28 @@ class OPUS(object):
     base_url = 'http://pds-rings-tools.seti.org/opus/api'
     files_url = base_url + '/files.json'
     payload = {'target': 'S+RINGS',
-               'instrumentid': 'Cassini+ISS',
-               'projectedradialresolution1': '',
-               'projectedradialresolution2': '0.5'}
+               'instrumentid': 'Cassini+ISS'}
 
-    def send_request(self):
+    def create_request(self, payload):
         r = requests.get(self.files_url,
-                         params=unquote(urlencode(self.payload)))
+                         params=unquote(urlencode(payload)))
+        return r
+
+    def send_request(self, payload):
+        r = self.create_request(payload)
         response = r.json()['data']
         obsids = []
         for obsid_data in response.items():
             obsids.append(OPUSObsID(obsid_data))
         self.obsids = obsids
+
+    def get_between_resolutions(self, res1='', res2='0.5'):
+        payload = self.payload.copy()
+        payload['projectedradialresolution1'] = res1
+        payload['projectedradialresolution2'] = res2
+        self.send_request(payload)
+
+    def get_filename(self, fname):
+        payload = {'primaryfilespec': fname}
+        self.send_request(payload)
+        return self.obsids
