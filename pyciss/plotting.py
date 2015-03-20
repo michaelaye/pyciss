@@ -53,5 +53,5 @@ def myinteract(img):
 def imshowlowhigh(data, low=10, high=90):
     fig, ax = plt.subplots()
     plow, phigh = np.percentile(data[~np.isnan(data)], (low, high))
-    ax.imshow(data, vmin=plow, vmax=phigh, cmap='gray')
+    ax.imshow(data, vmin=plow, vmax=phigh, cmap='gray', interpolation='sinc')
     return fig
