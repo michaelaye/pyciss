@@ -1,7 +1,9 @@
-from urllib.request import unquote
-from urllib.parse import urlparse, urlencode, urlunparse
+from urllib.request import unquote, urlretrieve
+from urllib.parse import urlparse, urlencode
 import requests
-from IPython.display import HTML, display
+from IPython.display import HTML
+import os.path as path
+from . import io
 
 base_url = 'http://pds-rings-tools.seti.org/opus/api'
 details_url = base_url + 'metadata/'
@@ -10,6 +12,8 @@ images_url = base_url + 'images/'
 
 srings_ciss_query = {'target': 'S+RINGS',
                      'instrumentid': 'Cassini+ISS'}
+
+savepath = path.join(io.HOME, 'data', 'ciss', 'opus')
 
 
 class OPUSImage(object):
@@ -157,3 +161,16 @@ class OPUS(object):
                               "src='{1}' />"
                               .format(width, s) for s in img_urls])
         return HTML(imagesList)
+
+    def download_results(self):
+        for obsid in self.obsids:
+            for url in [obsid.raw.image_url, obsid.raw.label_url]:
+                basename = path.basename(url)
+                print("Downloading", basename)
+                urlretrieve(url, path.join(savepath, basename))
+
+    def download_previews(self):
+        for obsid in self.obsids:
+            basename = path.basename(obsid.medium_img_url)
+            print("Downloading", basename)
+            urlretrieve(obsid.medium_img_url, path.join(savepath, basename))
