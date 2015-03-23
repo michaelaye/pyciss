@@ -20,8 +20,8 @@ class PyTest(TestCommand):
 
 
 setup(
-    name = "PYCISS",
-    version = "0.1beta",
+    name = "pyciss",
+    version = "0.2",
     packages = find_packages(),
 
     # install_requires = ['pandas>='+pandas_version, 'astropy'],
