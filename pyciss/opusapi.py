@@ -1,5 +1,9 @@
-from urllib.request import unquote, urlretrieve
-from urllib.parse import urlparse, urlencode
+try:
+    from urllib.request import unquote, urlretrieve
+    from urllib.parse import urlparse, urlencode
+except ImportError:
+    from urllib2 import unquote, urlparse
+    from urllib import urlretrieve, urlencode
 import requests
 from IPython.display import HTML
 import os.path as path
