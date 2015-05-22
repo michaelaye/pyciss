@@ -23,7 +23,7 @@ srings_ciss_query = {'target': 'S+RINGS',
 
 host = gethostname()
 if host == 'ringsvm':
-    savepath = '/data/opus'
+    savepath = '/usr/local/ringsdata/opus'
 else:
     savepath = path.join(io.HOME, 'data', 'ciss', 'opus')
 
@@ -183,12 +183,14 @@ class OPUS(object):
                               .format(width, s) for s in img_urls])
         return HTML(imagesList)
 
-    def download_results(self):
+    def download_results(self, targetfolder=None):
+        if targetfolder is not None:
+            currentsavepath = path.join(savepath, targetfolder)
         for obsid in self.obsids:
             for url in [obsid.raw.image_url, obsid.raw.label_url]:
                 basename = path.basename(url)
                 print("Downloading", basename)
-                urlretrieve(url, path.join(savepath, basename))
+                urlretrieve(url, path.join(currentsavepath, basename))
 
     def download_previews(self):
         for obsid in self.obsids:
