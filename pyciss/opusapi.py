@@ -1,13 +1,17 @@
+from __future__ import print_function, division
 try:
     from urllib.request import unquote, urlretrieve
     from urllib.parse import urlparse, urlencode
 except ImportError:
-    from urllib2 import unquote, urlparse
+    from urllib2 import unquote
+    from urlparse import urlparse
     from urllib import urlretrieve, urlencode
 import requests
 from IPython.display import HTML
 import os.path as path
 from . import io
+from socket import gethostname
+
 
 base_url = 'http://pds-rings-tools.seti.org/opus/api'
 details_url = base_url + 'metadata/'
@@ -17,11 +21,17 @@ images_url = base_url + 'images/'
 srings_ciss_query = {'target': 'S+RINGS',
                      'instrumentid': 'Cassini+ISS'}
 
-savepath = path.join(io.HOME, 'data', 'ciss', 'opus')
+host = gethostname()
+if host == 'ringsvm':
+    savepath = '/data/opus'
+else:
+    savepath = path.join(io.HOME, 'data', 'ciss', 'opus')
 
 
 class OPUSImage(object):
+
     """Manage URLS from the OPUS response."""
+
     def __init__(self, jsonlist):
         self.jsonlist = jsonlist
         for item in jsonlist:
@@ -40,11 +50,16 @@ class OPUSImage(object):
 
 
 class OPUSObsID(object):
+
     """Manage observation IDs from OPUS responses."""
+
     def __init__(self, obsid_data):
         self.idname = obsid_data[0]
         self.raw = OPUSImage(obsid_data[1]['RAW_IMAGE'])
-        self.calib = OPUSImage(obsid_data[1]['CALIBRATED'])
+        try:
+            self.calib = OPUSImage(obsid_data[1]['CALIBRATED'])
+        except KeyError:
+            self.calib = None
 
     def get_img_url(self, size):
         base = self.raw.label_url[:-4].replace('volumes', 'browse')
@@ -72,6 +87,7 @@ class OPUSObsID(object):
 
 
 class OPUS(object):
+
     """Manage OPUS API requests."""
 
     def get_filename(self, fname):
@@ -138,6 +154,7 @@ class OPUS(object):
         for obsid_data in response.items():
             obsids.append(OPUSObsID(obsid_data))
         self.obsids = obsids
+        print('Found {} obsids.'.format(len(obsids)))
 
     def get_radial_res_query(self, res1='', res2=0.5):
         myquery = srings_ciss_query.copy()
