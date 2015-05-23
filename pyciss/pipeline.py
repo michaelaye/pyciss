@@ -20,9 +20,9 @@ def calibrate_ciss(img_name, name_only=False):
     if name_only:
         return map_name
     ciss2isis(from_=img_name, to=cub_name)
-    targetname = getkey.check_output(from_=cub_name,
-                                     grp='instrument',
-                                     keyword='targetname')
+    targetname = getkey(from_=cub_name,
+                        grp='instrument',
+                        keyword='targetname')
     # forcing the target name to Saturn here, because some observations of
     # the rings have moons as a target, but then the standard map projection
     # onto the Saturn ring plane fails.
