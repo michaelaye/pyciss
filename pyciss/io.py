@@ -2,15 +2,21 @@ import os
 from pysis import CubeFile
 import matplotlib.pyplot as plt
 import numpy as np
-
+import glob
+import pandas as pd
 
 HOME = os.environ['HOME']
 
-dataroot = os.path.join(HOME, 'data/ciss')
+dataroot = '/Volumes/Data/ciss'
 
 
 def calc_4_3(width):
     return (width, 3*width/4)
+
+
+def get_cube_filelist():
+    res = glob.glob('/Volumes/Data/ciss/opus/*/*.map.cal.cub')
+    return pd.Series(res)
 
 
 class RingCube(CubeFile):
@@ -52,28 +58,31 @@ class RingCube(CubeFile):
         return self.mapping_label['PixelResolution'].units
 
     @property
-    def plotfname(self):
-        return self.filename.split('.')[0]
+    def plottitle(self):
+        return os.path.basename(self.filename).split('.')[0]
 
-    def imshow(self, data=None, plow=2, phigh=98, save_ext=None):
+    @property
+    def plotfname(self):
+        return self.filename.split('.')[0] + '.png'
+
+    def imshow(self, data=None, plow=2, phigh=98, save=False, **kwargs):
         if data is None:
             data = self.img
         min_, max_ = np.percentile(data[~np.isnan(data)], (plow, phigh))
         fig, ax = plt.subplots(figsize=calc_4_3(10))
-        ax.imshow(data, extent=self.extent, cmap='bone', vmin=min_, vmax=max_,
-                  interpolation='sinc')
+        ax.imshow(data, extent=self.extent, cmap='gray', vmin=min_, vmax=max_,
+                  interpolation='sinc', origin='lower', **kwargs)
         ax.set_xlabel('Longitude')
-        ax.set_ylabel('Radius [1e6 km]')
+        ax.set_ylabel('Radius [Mkm]')
         ax.ticklabel_format(useOffset=False)
-        ax.grid('on')
-        title = "{}, Resolution: {} {}".format(self.filename,
-                                               self.resolution_val,
+        # ax.grid('on')
+        title = "{}, Resolution: {} {}".format(self.plottitle,
+                                               int(self.resolution_val),
                                                self.resolution_unit)
 
         ax.set_title(title, fontsize=14)
-        if save_ext is not None:
-            savename = 'plots/'+self.plotfname+'_'+save_ext+'.png'
-            fig.savefig(savename, dpi=150)
+        if save:
+            fig.savefig(self.plotfname, dpi=150)
 
     @property
     def density_wave_subtracted(self):
