@@ -1,6 +1,6 @@
 from __future__ import division, print_function
 from pysis.isis import ciss2isis, cisscal, spiceinit, ringscam2map, getkey,\
-    editlab
+    editlab, dstripe
 from pysis.util import file_variations
 from pysis import IsisPool
 import gdal
@@ -14,9 +14,14 @@ ISISDATA = os.environ['ISIS3DATA']
 
 
 def calibrate_ciss(img_name, name_only=False):
-    (cub_name, cal_name, map_name) = file_variations(img_name,
-                                                     ['.cub', '.cal.cub',
-                                                      '.map.cal.cub'])
+    (cub_name,
+     cal_name,
+     dst_name,
+     map_name) = file_variations(img_name,
+                                 ['.cub',
+                                  '.cal.cub',
+                                  '.dst.cal.cub'
+                                  '.map.dst.cal.cub'])
     if name_only:
         return map_name
     ciss2isis(from_=img_name, to=cub_name)
@@ -35,7 +40,8 @@ def calibrate_ciss(img_name, name_only=False):
     spiceinit(from_=cub_name, cksmithed='yes', spksmithed='yes',
               shape='ringplane')
     cisscal(from_=cub_name, to=cal_name)
-    ringscam2map(from_=cal_name, to=map_name,
+    dstripe(from_=cal_name, to=dst_name, mode='horizontal')
+    ringscam2map(from_=dst_name, to=map_name,
                  map=pjoin(ISISDATA,
                            'base/templates/maps/ringcylindrical.map'))
     return map_name
