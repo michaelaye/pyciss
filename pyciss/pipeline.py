@@ -20,7 +20,7 @@ def calibrate_ciss(img_name, name_only=False):
      map_name) = file_variations(img_name,
                                  ['.cub',
                                   '.cal.cub',
-                                  '.dst.cal.cub'
+                                  '.dst.cal.cub',
                                   '.map.dst.cal.cub'])
     if name_only:
         return map_name
