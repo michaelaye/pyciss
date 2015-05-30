@@ -1,33 +1,16 @@
 # import ez_setup
 # ez_setup.use_setuptools()
-import sys
 from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
 
 pandas_version = '0.15.1'
 
-class PyTest(TestCommand):
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = ['-v', '-m']
-        self.test_suite = True
-
-    def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
-        import pytest
-        errno = pytest.main(self.test_args)
-        sys.exit(errno)
-
 
 setup(
-    name = "pyciss",
-    version = "0.2",
-    packages = find_packages(),
+    name="pyciss",
+    version="0.3",
+    packages=find_packages(),
 
-    # install_requires = ['pandas>='+pandas_version, 'astropy'],
-    # tests_require = ['pytest'],
-
-    cmdclass = {'test': PyTest},
+    install_requires=['pandas>='+pandas_version, 'astropy'],
 
     # entry_points={
     #     "console_scripts": [
@@ -35,11 +18,11 @@ setup(
     #         ]
     # },
 
-    #metadata
-    author = "K.-Michael Aye",
-    author_email = "michael.aye@lasp.colorado.edu",
-    description = "Software for handling Cassini ISS data",
-    license = "BSD 2-clause",
-    keywords = "CASSINI ISS",
-    url = "http://lasp.colorado.edu",
+    # metadata
+    author="K.-Michael Aye",
+    author_email="michael.aye@lasp.colorado.edu",
+    description="Software for handling Cassini ISS data",
+    license="BSD 2-clause",
+    keywords="CASSINI ISS",
+    url="http://lasp.colorado.edu",
 )
