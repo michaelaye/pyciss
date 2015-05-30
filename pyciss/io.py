@@ -45,11 +45,11 @@ class RingCube(CubeFile):
 
     @property
     def resolution_val(self):
-        return self.mapping_label['PixelResolution']['value']
+        return self.mapping_label['PixelResolution'].value
 
     @property
     def resolution_unit(self):
-        return self.mapping_label['PixelResolution']['units']
+        return self.mapping_label['PixelResolution'].units
 
     @property
     def plotfname(self):
