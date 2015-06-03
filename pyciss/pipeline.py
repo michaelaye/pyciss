@@ -10,7 +10,6 @@ import os
 from pyciss import plotting
 from pyciss.io import dataroot
 from . import io
-from pysis.exceptions import ProcessError
 
 
 ISISDATA = os.environ['ISIS3DATA']
@@ -28,9 +27,6 @@ def calibrate_ciss(img_name, name_only=False):
     if name_only:
         return map_name
     ciss2isis(from_=img_name, to=cub_name)
-    ds = gdal.Open(cub_name)
-    if ds.RasterXSize > 10000 or ds.RasterYSize > 10000:
-        raise ProcessError
     targetname = getkey(from_=cub_name,
                         grp='instrument',
                         keyword='targetname')
