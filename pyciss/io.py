@@ -1,5 +1,6 @@
 import os
 from pysis import CubeFile
+from pysis.isis import getkey
 import matplotlib.pyplot as plt
 import numpy as np
 import glob
@@ -8,6 +9,15 @@ import pandas as pd
 HOME = os.environ['HOME']
 
 dataroot = '/Volumes/Data/ciss'
+
+
+def is_lossy(label):
+    """Check Label file for the compression type. """
+    val = getkey(from_=label, keyword='INST_CMPRS_TYPE').decode().strip()
+    if val == 'LOSSY':
+        return True
+    else:
+        return False
 
 
 def calc_4_3(width):
