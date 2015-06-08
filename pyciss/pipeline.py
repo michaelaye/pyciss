@@ -1,6 +1,6 @@
 from __future__ import division, print_function
 from pysis.isis import ciss2isis, cisscal, spiceinit, ringscam2map, getkey,\
-    editlab, dstripe
+    editlab, dstripe, isis2std
 from pysis.util import file_variations
 from pysis import IsisPool
 import gdal
@@ -46,6 +46,7 @@ def calibrate_ciss(img_name, name_only=False):
     ringscam2map(from_=dst_name, to=map_name,
                  map=pjoin(ISISDATA,
                            'base/templates/maps/ringcylindrical.map'))
+    isis2std(from_=map_name, to=map_name[:-3]+'tif', format='tiff')
     return map_name
 
 

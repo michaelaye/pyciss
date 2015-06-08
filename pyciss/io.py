@@ -76,14 +76,15 @@ class RingCube(CubeFile):
         return self.filename.split('.')[0] + '.png'
 
     def imshow(self, data=None, plow=2, phigh=98, save=False, ax=None,
-               interpolation='sinc', **kwargs):
+               interpolation='sinc', extra_title=None, **kwargs):
         if data is None:
             data = self.img
         min_, max_ = np.percentile(data[~np.isnan(data)], (plow, phigh))
         if ax is None:
             fig, ax = plt.subplots(figsize=calc_4_3(10))
         ax.imshow(data, extent=self.extent, cmap='gray', vmin=min_, vmax=max_,
-                  interpolation=interpolation, origin='lower', **kwargs)
+                  interpolation=interpolation, origin='lower',
+                  aspect='auto', **kwargs)
         ax.set_xlabel('Longitude')
         ax.set_ylabel('Radius [Mkm]')
         ax.ticklabel_format(useOffset=False)
@@ -91,10 +92,14 @@ class RingCube(CubeFile):
         title = "{}, Resolution: {} {}".format(self.plottitle,
                                                int(self.resolution_val),
                                                self.resolution_unit)
-
+        if extra_title:
+            title += ', ' + extra_title
         ax.set_title(title, fontsize=14)
         if save:
-            fig.savefig(self.plotfname, dpi=150)
+            savename = self.plotfname
+            if extra_title:
+                savename = savename[:-4] + '_' + extra_title + '.png'
+            fig.savefig(savename, dpi=150)
 
     @property
     def density_wave_subtracted(self):
