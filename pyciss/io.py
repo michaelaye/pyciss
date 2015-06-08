@@ -75,13 +75,15 @@ class RingCube(CubeFile):
     def plotfname(self):
         return self.filename.split('.')[0] + '.png'
 
-    def imshow(self, data=None, plow=2, phigh=98, save=False, **kwargs):
+    def imshow(self, data=None, plow=2, phigh=98, save=False, ax=None,
+               interpolation='sinc', **kwargs):
         if data is None:
             data = self.img
         min_, max_ = np.percentile(data[~np.isnan(data)], (plow, phigh))
-        fig, ax = plt.subplots(figsize=calc_4_3(10))
+        if ax is None:
+            fig, ax = plt.subplots(figsize=calc_4_3(10))
         ax.imshow(data, extent=self.extent, cmap='gray', vmin=min_, vmax=max_,
-                  interpolation='sinc', origin='lower', **kwargs)
+                  interpolation=interpolation, origin='lower', **kwargs)
         ax.set_xlabel('Longitude')
         ax.set_ylabel('Radius [Mkm]')
         ax.ticklabel_format(useOffset=False)
