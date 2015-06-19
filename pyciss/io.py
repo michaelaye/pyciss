@@ -86,7 +86,7 @@ class RingCube(CubeFile):
                   interpolation=interpolation, origin='lower',
                   aspect='auto', **kwargs)
         ax.set_xlabel('Longitude')
-        ax.set_ylabel('Radius [Mkm]')
+        ax.set_ylabel('Radius [1000 km]')
         ax.ticklabel_format(useOffset=False)
         # ax.grid('on')
         title = "{}, Resolution: {} {}".format(self.plottitle,
