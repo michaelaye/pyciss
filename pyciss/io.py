@@ -102,13 +102,28 @@ class RingCube(CubeFile):
             fig.savefig(savename, dpi=150)
 
     @property
+    def mean_profile(self):
+        return np.nanmean(self.img, axis=1)
+
+    @property
     def density_wave_subtracted(self):
-        mean_profile = np.nanmean(self.img, axis=1)
-        subtracted = self.img - mean_profile[:, np.newaxis]
+        subtracted = self.img - self.mean_profile[:, np.newaxis]
         return subtracted
 
-    def imshow_subtracted(self):
-        self.imshow(data=self.density_wave_subtracted)
+    def imshow_subtracted(self, **kwargs):
+        self.imshow(data=self.density_wave_subtracted, **kwargs)
+
+    @property
+    def imgmin(self):
+        return np.nanmin(self.img)
+
+    @property
+    def imgmax(self):
+        return np.nanmax(self.img)
+
+    @property
+    def imgminmax(self):
+        return self.imgmin, self.imgmax
 
     @property
     def inner_zoom(self, data=None):
