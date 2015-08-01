@@ -107,8 +107,8 @@ class RingCube(CubeFile):
         subtracted = self.img - mean_profile[:, np.newaxis]
         return subtracted
 
-    def imshow_subtracted(self):
-        self.imshow(data=self.density_wave_subtracted)
+    def imshow_subtracted(self, **kwargs):
+        self.imshow(data=self.density_wave_subtracted, **kwargs)
 
     @property
     def inner_zoom(self, data=None):
