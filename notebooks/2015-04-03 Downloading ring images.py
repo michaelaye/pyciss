@@ -12,7 +12,7 @@ df
 df.info()
 
 
-# In[2]:
+# In[1]:
 
 from pyciss import opusapi
 
@@ -22,14 +22,14 @@ from pyciss import opusapi
 opus = opusapi.OPUS()
 
 
-# In[4]:
+# In[2]:
 
-opus.get_filename('N1467345444_2')
+opus.get_between_resolutions(0.5, 1)
 
 
-# In[5]:
+# In[3]:
 
-opus.download_results()
+opus.r.url
 
 
 # In[7]:
