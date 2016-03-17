@@ -1,21 +1,26 @@
+""" Note that the calibration starts from the LBL files, not the IMG !!! """
 from __future__ import division, print_function
-from pysis.isis import ciss2isis, cisscal, spiceinit, ringscam2map, getkey,\
-    editlab, dstripe, isis2std
-from pysis.util import file_variations
-from pysis import IsisPool
+
+import os
+from os.path import join as pjoin
+
 import gdal
 import numpy as np
-from os.path import join as pjoin
-import os
 from pyciss import plotting
 from pyciss.io import dataroot
-from . import io
+from pysis import IsisPool
+from pysis.isis import (ciss2isis, cisscal, dstripe, editlab, getkey, isis2std,
+                        ringscam2map, spiceinit)
+from pysis.util import file_variations
 
+from . import io
 
 ISISDATA = os.environ['ISIS3DATA']
 
 
 def calibrate_ciss(img_name, name_only=False):
+
+    img_name = str(img_name)
     (cub_name,
      cal_name,
      dst_name,
