@@ -9,10 +9,11 @@ except ImportError:
 import requests
 from IPython.display import HTML
 import os.path as path
-from . import io
+import os
 from socket import gethostname
 
 
+HOME = os.environ['HOME']
 base_url = 'http://pds-rings-tools.seti.org/opus/api'
 details_url = base_url + 'metadata/'
 image_url = base_url + 'image/'
@@ -25,7 +26,7 @@ host = gethostname()
 if host == 'ringsvm':
     savepath = '/usr/local/ringsdata/opus'
 else:
-    savepath = path.join(io.HOME, 'data', 'ciss', 'opus')
+    savepath = path.join(HOME, 'data', 'ciss', 'opus')
 
 
 class OPUSImage(object):
@@ -95,7 +96,7 @@ class OPUS(object):
 
         This example receives an image of Titan:
 
-        >>> opus = io.Opus()
+        >>> opus = opusapi.OPUS()
         >>> opus.get_filename('N1695760475_1')
         """
         myquery = {'primaryfilespec': fname}
@@ -186,6 +187,8 @@ class OPUS(object):
     def download_results(self, targetfolder=None):
         if targetfolder is not None:
             currentsavepath = path.join(savepath, targetfolder)
+        else:
+            currentsavepath = savepath
         for obsid in self.obsids:
             for url in [obsid.raw.image_url, obsid.raw.label_url]:
                 basename = path.basename(url)
