@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 # from skimage.exposure import equalize_hist
-from IPython.html.widgets import interact, fixed
+from ipywidgets import interact, fixed
 import numpy as np
 # import gdal
 
