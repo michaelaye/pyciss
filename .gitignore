@@ -56,3 +56,4 @@ target/
 *.IMG
 *.LBL
 *.ipynb_checkpoints/
+*.sublime-workspace
