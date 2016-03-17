@@ -1,14 +1,16 @@
+import glob
 import os
-from pysis import CubeFile
-from pysis.isis import getkey
+
 import matplotlib.pyplot as plt
 import numpy as np
-import glob
 import pandas as pd
+from pathlib import Path
+from pysis import CubeFile
+from pysis.isis import getkey
 
 HOME = os.environ['HOME']
 
-dataroot = '/Volumes/Data/ciss'
+dataroot = Path('/Volumes/Data/ciss')
 
 
 def is_lossy(label):
@@ -76,17 +78,19 @@ class RingCube(CubeFile):
         return self.filename.split('.')[0] + '.png'
 
     def imshow(self, data=None, plow=2, phigh=98, save=False, ax=None,
-               interpolation='sinc', extra_title=None, **kwargs):
+               interpolation='sinc', extra_title=None,
+               set_extent=True, **kwargs):
         if data is None:
             data = self.img
+        extent_val = self.extent if set_extent else None
         min_, max_ = np.percentile(data[~np.isnan(data)], (plow, phigh))
         if ax is None:
             fig, ax = plt.subplots(figsize=calc_4_3(10))
-        ax.imshow(data, extent=self.extent, cmap='gray', vmin=min_, vmax=max_,
+        ax.imshow(data, extent=extent_val, cmap='gray', vmin=min_, vmax=max_,
                   interpolation=interpolation, origin='lower',
                   aspect='auto', **kwargs)
-        ax.set_xlabel('Longitude')
-        ax.set_ylabel('Radius [1000 km]')
+        ax.set_xlabel('Longitude [deg]')
+        ax.set_ylabel('Radius [Mm]')
         ax.ticklabel_format(useOffset=False)
         # ax.grid('on')
         title = "{}, Resolution: {} {}".format(self.plottitle,
