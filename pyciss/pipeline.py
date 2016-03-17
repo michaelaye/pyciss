@@ -70,12 +70,17 @@ def calibrate_many(images):
     return images
 
 
+def remove_mean_value(data, axis=1):
+    mean_value = np.nanmean(data, axis=axis)
+    subtracted = data - mean_value[:, np.newaxis]
+    return subtracted
+
+
 def process_image(fname):
     ds = gdal.Open(fname)
     data = ds.ReadAsArray()
     data[data < -2e+38] = np.nan
-    mean_value = np.nanmean(data, axis=1)
-    subtracted = data - mean_value[:, np.newaxis]
+    subtracted = remove_mean_value(data, axis=1)
     fig = plotting.imshowlowhigh(subtracted)
     savename = pjoin(dataroot, 'pipeline_out')
     fig.savefig(pjoin(savename, fname+'.png'), dpi=150)
