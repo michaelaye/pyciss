@@ -29,6 +29,46 @@ else:
     savepath = path.join(HOME, 'data', 'ciss', 'opus')
 
 
+class MetaData(object):
+
+    def __init__(self, img_id):
+        urlname = "S_IMG_CO_ISS_{}_{}.json".format(img_id[1:], img_id[0])
+        urlbase = "http://pds-rings-tools.seti.org/opus/api/metadata/"
+        self.r = requests.get(urlbase+urlname).json()
+
+    @property
+    def image(self):
+        return self.r['Image Constraints']
+
+    @property
+    def wavelength(self):
+        return self.r['Wavelength Constraints']
+
+    @property
+    def surface_geom(self):
+        return self.r['Cassini Surface Geometry']
+
+    @property
+    def mission(self):
+        return self.r['Cassini Mission Constraints']
+
+    @property
+    def ring_geom(self):
+        return self.r['Ring Geometry Constraints']
+
+    @property
+    def general(self):
+        return self.r['General Constraints']
+
+    @property
+    def iss(self):
+        return self.r['Cassini ISS Constraints']
+
+    @property
+    def surface(self):
+        return self.r['Saturn Surface Geometry']
+
+
 class OPUSImage(object):
 
     """Manage URLS from the OPUS response."""

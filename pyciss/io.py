@@ -1,9 +1,8 @@
-import glob
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
+from .opusapi import MetaData
 from pathlib import Path
 from pysis import CubeFile
 from pysis.isis import getkey
@@ -11,6 +10,54 @@ from pysis.isis import getkey
 HOME = os.environ['HOME']
 
 dataroot = Path('/Volumes/Data/ciss')
+dbpath = dataroot / 'db'
+
+
+def db_mapped_cubes():
+    return dbpath.glob("*cal.dst.map.cub")
+
+
+def db_label_paths():
+    return dbpath.glob("*.LBL")
+
+
+class PathManager(object):
+
+    def __init__(self, _id):
+
+        if Path(_id).is_absolute():
+            self._id = Path(_id).name.split('_')[0]
+        else:
+            self._id = _id
+        self._basepath = dbpath / _id
+
+    @property
+    def basepath(self):
+        return self._basepath
+
+    @property
+    def calib_img(self):
+        return next(dbpath.glob(self._id + "*_CALIB.IMG"))
+
+    @property
+    def raw_image(self):
+        return next(dbpath.glob(self._id + "*_?.IMG"))
+
+    @property
+    def raw_cub(self):
+        return next(dbpath.glob(self._id + "*_?.cub"))
+
+    @property
+    def cal_cub(self):
+        return next(dbpath.glob(self._id + "*_?.cal.cub"))
+
+    @property
+    def raw_label(self):
+        return self.raw_image.with_suffix('.LBL')
+
+    @property
+    def cubepath(self):
+        return self.raw_label.with_suffix('.cal.dst.map.cub')
 
 
 def is_lossy(label):
@@ -26,12 +73,20 @@ def calc_4_3(width):
     return (width, 3*width/4)
 
 
-def get_cube_filelist():
-    res = glob.glob('/Volumes/Data/ciss/opus/*/*.map.cal.cub')
-    return pd.Series(res)
-
-
 class RingCube(CubeFile):
+
+    def __init__(self, fname, **kwargs):
+        fname = str(fname)
+        super().__init__(fname, **kwargs)
+        self.pm = PathManager(fname)
+        self.meta = MetaData(self.pm._id)
+
+    @property
+    def is_lit(self):
+        if self.meta.ring_geom['emission1'] > 90:
+            return False
+        else:
+            return True
 
     @property
     def mapping_label(self):
