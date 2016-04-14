@@ -6,6 +6,7 @@ from os.path import join as pjoin
 
 import gdal
 import numpy as np
+from pathlib import Path
 from pyciss import plotting
 from pyciss.io import dataroot
 from pysis import IsisPool
@@ -15,7 +16,7 @@ from pysis.util import file_variations
 
 from . import io
 
-ISISDATA = os.environ['ISIS3DATA']
+ISISDATA = Path(os.environ['ISIS3DATA'])
 
 
 def calibrate_ciss(img_name, name_only=False):
@@ -27,8 +28,8 @@ def calibrate_ciss(img_name, name_only=False):
      map_name) = file_variations(img_name,
                                  ['.cub',
                                   '.cal.cub',
-                                  '.dst.cal.cub',
-                                  '.map.dst.cal.cub'])
+                                  '.cal.dst.cub',
+                                  '.cal.dst.map.cub'])
     if name_only:
         return map_name
     ciss2isis(from_=img_name, to=cub_name)
@@ -49,8 +50,7 @@ def calibrate_ciss(img_name, name_only=False):
     cisscal(from_=cub_name, to=cal_name)
     dstripe(from_=cal_name, to=dst_name, mode='horizontal')
     ringscam2map(from_=dst_name, to=map_name,
-                 map=pjoin(ISISDATA,
-                           'base/templates/maps/ringcylindrical.map'))
+                 map=ISISDATA / 'base/templates/maps/ringcylindrical.map')
     isis2std(from_=map_name, to=map_name[:-3]+'tif', format='tiff')
     return map_name
 
