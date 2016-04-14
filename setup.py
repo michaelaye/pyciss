@@ -12,11 +12,9 @@ setup(
 
     install_requires=['pandas>='+pandas_version, 'astropy'],
 
-    # entry_points={
-    #     "console_scripts": [
-    #         'scp_l1a = diviner.file_utils:scp_l1a_file'
-    #         ]
-    # },
+    package_data={
+        'meta': [data/metadata.csv]
+    }
 
     # metadata
     author="K.-Michael Aye",

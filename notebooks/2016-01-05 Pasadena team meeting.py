@@ -1,11 +1,11 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 from pathlib import Path
 import warnings
-from pyciss import io
+from pyciss import io, pipeline
 import seaborn as sns
 from sklearn.preprocessing import scale
 sns.set_style('white')
@@ -13,45 +13,24 @@ sns.set_context('notebook')
 get_ipython().magic('matplotlib nbagg')
 
 
-# In[2]:
+# In[ ]:
 
-root = Path('/Users/klay6683/Dropbox/data/ciss/SOI')
-
-
-# In[3]:
-
-fpaths = list(root.glob('*2.map.dst.cal.cub'))
-
-
-# In[4]:
-
-def remove_mean_value(data, axis=1):
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=RuntimeWarning)
-        mean_value = np.nanmean(data, axis=axis)
-    subtracted = data - mean_value[:, np.newaxis]
-    return subtracted
-
-
-# In[5]:
-
-savedir = fpaths[0].parent / 'std_overlays'
+savedir = io.dbpath.parent / 'std_overlays'
 savedir.mkdir(exist_ok=True)
 
 
-# In[6]:
+# In[ ]:
+
+savedir
+
+
+# In[ ]:
 
 get_ipython().magic('matplotlib nbagg')
 sns.set_style('white')
 
 
-# In[7]:
-
-for i,fpath in enumerate(fpaths):
-    print(i, fpath.name)
-
-
-# In[8]:
+# In[ ]:
 
 def mad(arr):
     """ Median Absolute Deviation: a "Robust" version of standard deviation.
@@ -62,14 +41,24 @@ def mad(arr):
     return np.nanmedian(np.abs(arr - med[:, np.newaxis]), axis=1)
 
 
-# In[9]:
+# In[ ]:
 
-for fpath in fpaths[13:14]:
-    cube = io.RingCube(str(fpath))
+cubes = io.db_mapped_cubes()
+
+
+# In[ ]:
+
+cube = io.RingCube(next(cubes))
+
+
+# In[ ]:
+
+def process_cube(fpath):
+    cube = io.RingCube(fpath)
     img = cube.data[0]
     low, high = np.percentile(img[img>0], (2,98))
     img[img<0] = np.nan
-    sub = remove_mean_value(img)
+    sub = pipeline.remove_mean_value(img)
     sublow, subhigh = np.percentile(sub[~np.isnan(sub)], (2,98))
     fig, ax = plt.subplots(ncols=2, figsize=(10, 6), sharey=False)
 #     ax = ax.ravel()
@@ -106,12 +95,187 @@ for fpath in fpaths[13:14]:
 #     plt.close(fig)
 
 
-# In[10]:
+# In[ ]:
+
+process_cube(Path(cube.filename))
+
+
+# In[ ]:
+
+from pyciss.meta import meta1500m
+
+
+# In[ ]:
+
+meta1500m.columns
+
+
+# In[ ]:
+
+meta1500m[meta1500m.id=='N1591682340'].lit_status
+
+
+# In[ ]:
+
+io.PathManager(cube.filename).cubepath.exists()
+
+
+# In[ ]:
+
+from pathlib import Path
+
+
+# In[ ]:
+
+p = next(io.db_label_paths())
+
+
+# In[ ]:
+
+cubepath = io.PathManager('N1503229567').cubepath
+
+process_cube(cubepath)
+
+
+# In[ ]:
+
+cubepath = io.PathManager('N1467346565').cubepath
+process_cube(cubepath)
+
+
+# In[ ]:
+
+cube = io.RingCube(cubepath)
+
+
+# In[ ]:
+
+plt.figure(figsize=(12,10))
+plt.imshow(np.log(np.abs(np.fft.fftshift(np.fft.fft2(img)))))
+
+
+# In[ ]:
+
+img = cube.data[0]
+
+
+# In[ ]:
+
+img[img<0]=0
+
+
+# In[ ]:
+
+plt.figure(figsize=(12,10))
+plt.imshow(img, vmax=0.1, cmap='gray')
+plt.colorbar()
+
+
+# In[ ]:
+
+subimg = img[750:1200, 200:1350]
+
+
+# In[ ]:
+
+plt.imshow(subimg, vmax=0.1, cmap='gray')
+
+
+# In[ ]:
+
+plt.figure(figsize=(12,10))
+plt.imshow(np.log(np.abs(np.fft.fftshift(np.fft.fft2(subimg)))))
+
+
+# In[ ]:
+
+from skimage.feature import hog
+from skimage import exposure
+
+
+# In[ ]:
+
+fd, hog_image = hog(subimg, orientations=8, pixels_per_cell=(16, 16),
+                    cells_per_block=(1, 1), visualise=True)
+
+
+# In[ ]:
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True)
+
+ax1.axis('off')
+ax1.imshow(subimg, cmap=plt.cm.gray)
+ax1.set_title('Input image')
+ax1.set_adjustable('box-forced')
+
+# Rescale histogram for better display
+hog_image_rescaled = exposure.rescale_intensity(hog_image, in_range=(0, 0.02))
+
+ax2.axis('off')
+ax2.imshow(hog_image_rescaled, cmap=plt.cm.gray)
+ax2.set_title('Histogram of Oriented Gradients')
+ax1.set_adjustable('box-forced')
+plt.show()
+
+
+# In[ ]:
+
+cubepath = io.PathManager('N1467346447').cubepath
+
+process_cube(cubepath)
+
+
+# In[ ]:
+
+cube = io.RingCube(cubepath)
+
+
+# In[ ]:
 
 cube.imshow(set_extent=False)
 
 
-# In[11]:
+# In[ ]:
+
+cubepath = io.PathManager('/Volumes/Data/ciss/std_overlays/N1467345562_3.cal.dst.map.png').cubepath
+
+process_cube(cubepath)
+
+
+# In[ ]:
+
+cubepath = io.PathManager('/Volumes/Data/ciss/std_overlays/N1467345680_2.cal.dst.map.png').cubepath
+
+process_cube(cubepath)
+
+
+# In[ ]:
+
+cube = io.RingCube(cubepath)
+
+
+# In[ ]:
+
+cube.imshow(set_extent=False)
+
+
+# In[ ]:
+
+subimg = cube.img[1380:1465, 500:1800]
+
+
+# In[ ]:
+
+cube.imshow(data=subimg)
+
+
+# In[ ]:
+
+plt.figure(figsize=(12,10))
+plt.imshow(np.log(np.abs(np.fft.fftshift(np.fft.fft2(subimg)))))
+
+
+# In[ ]:
 
 plt.figure()
 min_ind = 681
@@ -123,13 +287,13 @@ plt.plot(img[out_ind], label='out')
 plt.legend(loc=1)
 
 
-# In[12]:
+# In[ ]:
 
 import wavelets
 from wavelets import WaveletAnalysis
 
 
-# In[13]:
+# In[ ]:
 
 x1 = img[max_var_ind]
 x1 = x1[~np.isnan(x1)]
@@ -137,12 +301,12 @@ x2 = img[min_ind]
 x2 = x2[~np.isnan(x2)]
 
 
-# In[14]:
+# In[ ]:
 
 cube.resolution_val
 
 
-# In[15]:
+# In[ ]:
 
 # dt = 0.35
 
@@ -174,24 +338,24 @@ def plot_wavelet(x1, x2):
     
 
 
-# In[16]:
+# In[ ]:
 
 plot_wavelet(x1, x2)
 
 
 # # Sinusoidal fits
 
-# In[17]:
+# In[ ]:
 
 img = cube.img
 
 
-# In[18]:
+# In[ ]:
 
 img.shape
 
 
-# In[56]:
+# In[ ]:
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -226,7 +390,7 @@ def fit_row(data, guess_freq):
     plt.show()
 
 
-# In[57]:
+# In[ ]:
 
 row = img[1000:1001]
 data = row[~np.isnan(row)][:-3]
@@ -234,7 +398,7 @@ plt.figure()
 plt.plot(data)
 
 
-# In[59]:
+# In[ ]:
 
 fit_row(data, 0.05)
 
