@@ -6,8 +6,9 @@ import numpy as np
 from pathlib import Path
 from pysis import CubeFile
 
-from .opusapi import MetaData
+from .meta import prime_resonances as resonances
 from .meta import meta_df
+from .opusapi import MetaData
 
 try:
     from pysis.isis import getkey
@@ -119,7 +120,7 @@ class RingCube(CubeFile):
     @property
     def meta_pixres(self):
         if self.meta is not None:
-            return self.meta.pixres*1000
+            return int(self.meta.pixres*1000)
         else:
             return np.nan
 
@@ -199,11 +200,23 @@ class RingCube(CubeFile):
         if extra_title:
             title += ', ' + extra_title
         ax.set_title(title, fontsize=14)
+        self.set_resonance_axis(ax)
         if save:
             savename = self.plotfname
             if extra_title:
                 savename = savename[:-4] + '_' + extra_title + '.png'
             fig.savefig(savename, dpi=150)
+
+    def set_resonance_axis(self, ax):
+        filter1 = (resonances['radius'] > (self.minrad*1000))
+        filter2 = (resonances['radius'] < (self.maxrad*1000))
+        newticks = resonances[filter1 & filter2]
+        ax2 = ax.twinx()
+        ax2.set_ybound(self.minrad, self.maxrad)
+        ax2.ticklabel_format(useOffset=False)
+        ax2.set_yticks(newticks.radius/1000)
+        ax2.set_yticklabels(newticks.name)
+        return ax2
 
     @property
     def mean_profile(self):
