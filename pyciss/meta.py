@@ -10,3 +10,7 @@ def read_metadata(f):
 
 with pr.resource_stream('pyciss', 'data/metadata.txt') as f:
     meta_df = read_metadata(f)
+
+
+with pr.resource_stream('pyciss', 'data/ring_resonances.csv') as f:
+    df = pd.read_csv(f)

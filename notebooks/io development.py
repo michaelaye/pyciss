@@ -11,6 +11,25 @@ from pyciss.io import RingCube, PathManager
 pm = PathManager("N1591682340") 
 
 
+# # meta development
+
+# In[5]:
+
+import pkg_resources as pr
+
+
+# In[11]:
+
+with pr.resource_stream('pyciss', 'data/ring_resonances.csv') as f:
+    resonances = pd.read_csv(f)
+resonances.head()
+
+
+# In[13]:
+
+resonances.sort_values(by='Resonance (km)',ascending=False)
+
+
 # In[3]:
 
 from pyciss.meta import meta_df
