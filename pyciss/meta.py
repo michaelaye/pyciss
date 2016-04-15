@@ -13,4 +13,4 @@ with pr.resource_stream('pyciss', 'data/metadata.txt') as f:
 
 
 with pr.resource_stream('pyciss', 'data/ring_resonances.csv') as f:
-    df = pd.read_csv(f)
+    resonances = pd.read_csv(f)
