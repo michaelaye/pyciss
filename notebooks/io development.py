@@ -13,6 +13,16 @@ pm = PathManager("N1591682340")
 
 # In[3]:
 
+from pyciss.meta import meta_df
+
+
+# In[4]:
+
+meta_df.head()
+
+
+# In[3]:
+
 cube = RingCube(pm.cal_cub)
 
 

@@ -13,8 +13,8 @@ setup(
     install_requires=['pandas>='+pandas_version, 'astropy'],
 
     package_data={
-        'meta': [data/metadata.csv]
-    }
+        'pyciss': ['data/*']
+    },
 
     # metadata
     author="K.-Michael Aye",
