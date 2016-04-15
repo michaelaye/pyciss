@@ -1,24 +1,33 @@
 import os
+from socket import gethostname
 
 import matplotlib.pyplot as plt
 import numpy as np
-from .opusapi import MetaData
 from pathlib import Path
 from pysis import CubeFile
-from pysis.isis import getkey
 
-HOME = os.environ['HOME']
+from .opusapi import MetaData
+from .meta import meta_df
 
-dataroot = Path('/Volumes/Data/ciss')
-dbpath = dataroot / 'db'
+try:
+    from pysis.isis import getkey
+except ImportError:
+    print("Cannot import ISIS system.")
+
+hostname = gethostname()
+if hostname.startswith("MacL2938"):
+    dataroot = Path("/Volumes/USB128GB/ciss")
+else:
+    dataroot = Path('/Volumes/Data/ciss')
+dbroot = dataroot / 'db'
 
 
 def db_mapped_cubes():
-    return dbpath.glob("*cal.dst.map.cub")
+    return dbroot.glob("**/*cal.dst.map.cub")
 
 
 def db_label_paths():
-    return dbpath.glob("*.LBL")
+    return dbroot.glob("*.LBL")
 
 
 class PathManager(object):
@@ -29,35 +38,53 @@ class PathManager(object):
             self._id = Path(_id).name.split('_')[0]
         else:
             self._id = _id
-        self._basepath = dbpath / _id
+        self._basepath = dbroot / _id
 
     @property
     def basepath(self):
         return self._basepath
 
     @property
+    def id(self):
+        return self._id
+
+    def check_and_return(self, myiter):
+        l = list(myiter)
+        if l:
+            return l[0]
+        else:
+            print("No file found.")
+            return None
+
+    @property
     def calib_img(self):
-        return next(dbpath.glob(self._id + "*_CALIB.IMG"))
+        return self.check_and_return((dbroot / self.id).glob(self._id + "*_CALIB.IMG"))
 
     @property
     def raw_image(self):
-        return next(dbpath.glob(self._id + "*_?.IMG"))
+        return self.check_and_return((dbroot / self.id).glob(self._id + "*_?.IMG"))
 
     @property
     def raw_cub(self):
-        return next(dbpath.glob(self._id + "*_?.cub"))
+        return self.check_and_return((dbroot / self.id).glob(self._id + "*_?.cub"))
 
     @property
     def cal_cub(self):
-        return next(dbpath.glob(self._id + "*_?.cal.cub"))
+        return self.check_and_return((dbroot / self.id).glob(self._id + "*_?.cal.cub"))
 
     @property
     def raw_label(self):
-        return self.raw_image.with_suffix('.LBL')
+        try:
+            return self.raw_image.with_suffix('.LBL')
+        except AttributeError:
+            return None
 
     @property
     def cubepath(self):
-        return self.raw_label.with_suffix('.cal.dst.map.cub')
+        try:
+            return self.raw_label.with_suffix('.cal.dst.map.cub')
+        except AttributeError:
+            return None
 
 
 def is_lossy(label):
@@ -79,14 +106,29 @@ class RingCube(CubeFile):
         fname = str(fname)
         super().__init__(fname, **kwargs)
         self.pm = PathManager(fname)
-        self.meta = MetaData(self.pm._id)
+        try:
+            self.meta = meta_df.loc[self.pm.id]
+        except KeyError:
+            self.meta = None
+
+    def get_opus_meta_data(self):
+        print("Getting metadata from the online OPUS database.")
+        self.opusmeta = MetaData(self.pm._id)
+        print("Done.")
 
     @property
-    def is_lit(self):
-        if self.meta.ring_geom['emission1'] > 90:
-            return False
+    def meta_pixres(self):
+        if self.meta is not None:
+            return self.meta.pixres*1000
         else:
-            return True
+            return np.nan
+
+    @property
+    def meta_litstatus(self):
+        if self.meta is not None:
+            return self.meta.lit_status.upper()
+        else:
+            return np.nan
 
     @property
     def mapping_label(self):
@@ -110,6 +152,7 @@ class RingCube(CubeFile):
 
     @property
     def img(self):
+        "apply_numpy_special is inherited from CubeFile."
         return self.apply_numpy_specials()[0]
 
     @property
@@ -132,7 +175,7 @@ class RingCube(CubeFile):
     def plotfname(self):
         return self.filename.split('.')[0] + '.png'
 
-    def imshow(self, data=None, plow=2, phigh=98, save=False, ax=None,
+    def imshow(self, data=None, plow=1, phigh=99, save=False, ax=None,
                interpolation='sinc', extra_title=None,
                set_extent=True, **kwargs):
         if data is None:
@@ -148,9 +191,11 @@ class RingCube(CubeFile):
         ax.set_ylabel('Radius [Mm]')
         ax.ticklabel_format(useOffset=False)
         # ax.grid('on')
-        title = "{}, Resolution: {} {}".format(self.plottitle,
-                                               int(self.resolution_val),
-                                               self.resolution_unit)
+        title = "{}, Label_Res: {} m/pix, Metadata_Res: {} m/pix, {}".format(
+                        self.plottitle,
+                        int(self.resolution_val),
+                        self.meta_pixres,
+                        self.meta_litstatus)
         if extra_title:
             title += ', ' + extra_title
         ax.set_title(title, fontsize=14)

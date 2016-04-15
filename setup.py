@@ -2,7 +2,7 @@
 # ez_setup.use_setuptools()
 from setuptools import setup, find_packages
 
-pandas_version = '0.15.1'
+pandas_version = '0.17.1'
 
 
 setup(
