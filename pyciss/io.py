@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 from pysis import CubeFile
 
-from .meta import prime_resonances as resonances
+from .meta import all_resonances as resonances
 from .meta import meta_df
 from .opusapi import MetaData
 
@@ -184,7 +184,7 @@ class RingCube(CubeFile):
         extent_val = self.extent if set_extent else None
         min_, max_ = np.percentile(data[~np.isnan(data)], (plow, phigh))
         if ax is None:
-            fig, ax = plt.subplots(figsize=calc_4_3(10))
+            fig, ax = plt.subplots(figsize=calc_4_3(8))
         ax.imshow(data, extent=extent_val, cmap='gray', vmin=min_, vmax=max_,
                   interpolation=interpolation, origin='lower',
                   aspect='auto', **kwargs)
@@ -201,6 +201,7 @@ class RingCube(CubeFile):
             title += ', ' + extra_title
         ax.set_title(title, fontsize=14)
         self.set_resonance_axis(ax)
+        fig.tight_layout()
         if save:
             savename = self.plotfname
             if extra_title:

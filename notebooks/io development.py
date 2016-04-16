@@ -1,76 +1,40 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 from pyciss.io import RingCube, PathManager, db_mapped_cubes
 
 
-# In[2]:
+# In[ ]:
 
-pm = PathManager("N1467345444") 
+all_mapped_cubes = db_mapped_cubes()
 
 
 # # meta development
 
-# In[3]:
+# In[ ]:
 
-import pkg_resources as pr
-
-
-# In[4]:
-
-with pr.resource_stream('pyciss', 'data/ring_resonances.csv') as f:
-    resonances = pd.read_csv(f)
-resonances.head()
+from pyciss.meta import prime_resonances
 
 
-# In[5]:
-
-resonances.sort_values(by='Resonance (km)',ascending=False).head()
-
-
-# In[6]:
-
-from pyciss.meta import meta_df
-
-
-# In[7]:
-
-meta_df.head()
-
-
-# In[8]:
-
-meta_df.loc[pm._id]
-
-
-# In[9]:
-
-cube = RingCube(pm.cubepath)
-
-
-# In[10]:
-
-cube.meta.pixres
-
-
-# In[11]:
+# In[ ]:
 
 get_ipython().magic('matplotlib nbagg')
 
 
-# In[12]:
+# In[ ]:
 
+cube = RingCube(next(all_mapped_cubes))
 cube.imshow()
 
 
-# In[13]:
+# In[ ]:
 
 cube.meta
 
 
-# In[123]:
+# In[ ]:
 
 dics = []
 for p in db_mapped_cubes():
@@ -83,110 +47,110 @@ for p in db_mapped_cubes():
     dics.append(d)
 
 
-# In[124]:
+# In[ ]:
 
 df = pd.DataFrame(dics)
 
 
-# In[125]:
+# In[ ]:
 
 df.head()
 
 
-# In[126]:
+# In[ ]:
 
 df['id'] = df.path.map(lambda x: x.name.split('_')[0])
 
 
-# In[127]:
+# In[ ]:
 
 df.set_index('time',inplace=True)
 
 
-# In[31]:
+# In[ ]:
 
 df.set_index('id', inplace=True)
 
 
-# In[128]:
+# In[ ]:
 
 df = df.sort_index()
 
 
-# In[43]:
+# In[ ]:
 
 df.tail()
 
 
-# In[45]:
+# In[ ]:
 
 df['ratio'] = df.meta_res / df.label_res
 
 
-# In[130]:
+# In[ ]:
 
 df[df.label_res<5000].plot(style='*')
 
 
-# In[18]:
+# In[ ]:
 
 cube = RingCube(df[df.label_res>5000].path.values[0])
 
 
-# In[19]:
+# In[ ]:
 
 cube.imshow()
 
 
-# In[36]:
+# In[ ]:
 
 cube.imagetime
 
 
-# In[22]:
+# In[ ]:
 
 cube.get_opus_meta_data()
 
 
-# In[26]:
+# In[ ]:
 
 cube.opusmeta.ring_geom
 
 
 # # Resonances plotting
 
-# In[1]:
+# In[ ]:
 
 from pyciss.meta import prime_resonances as resonances
 from pyciss import io
 
 
-# In[2]:
+# In[ ]:
 
 resonances.head()
 
 
-# In[53]:
+# In[ ]:
 
 all_mapped_cubes = io.db_mapped_cubes()
 
 
-# In[54]:
+# In[ ]:
 
-get_ipython().magic('matplotlib nbagg')
+get_ipython().magic('matplotlib inline')
 
 
-# In[57]:
+# In[ ]:
 
 cube = io.RingCube(next(all_mapped_cubes))
 
 
-# In[58]:
+# In[ ]:
 
 cube.imshow()
 
 
-# In[52]:
+# In[ ]:
 
 cube = io.RingCube(next(all_mapped_cubes))
 
@@ -200,22 +164,22 @@ ax2.set_yticks(newticks.radius/1000)
 ax2.set_yticklabels(newticks.name);
 
 
-# In[33]:
+# In[ ]:
 
 ax.get_ybound()
 
 
-# In[34]:
+# In[ ]:
 
 ax.get_ylim()
 
 
-# In[35]:
+# In[ ]:
 
 get_ipython().magic('pinfo2 ax.get_ylim')
 
 
-# In[36]:
+# In[ ]:
 
 get_ipython().magic('pinfo2 ax.get_ybound')
 
@@ -230,17 +194,17 @@ ax2 = ax.twinx
 ax.set_yticks(resonanc)
 
 
-# In[96]:
+# In[ ]:
 
 f = lambda x,y: (resonances['radius']>x) & (resonances['radius']<y)
 
 
-# In[97]:
+# In[ ]:
 
 resonances[f(134220, 134326)]
 
 
-# In[93]:
+# In[ ]:
 
 resonances.describe()
 
