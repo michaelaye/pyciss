@@ -6,12 +6,18 @@
 Welcome to pyciss's documentation!
 ==================================
 
+This Python package is offering a few tools for working with data from the
+*Imaging Science Subsystem* of the **Cassini** mission to Saturn. (See
+:cite:`2004chm..book..363P` for an introduction to the camera system.)
+
+
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
-
+   tutorial
 
 Indices and tables
 ==================
@@ -20,3 +26,4 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+.. bibliography:: references.bib
