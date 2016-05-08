@@ -15,6 +15,13 @@ try:
 except ImportError:
     print("Cannot import ISIS system.")
 
+try:
+    # prettier plots with seaborn
+    import seaborn as sns
+    _SEABORN_INSTALLED = True
+except ImportError:
+    _SEABORN_INSTALLED = False
+
 hostname = gethostname()
 if hostname.startswith("MacL2938"):
     dataroot = Path("/Volumes/USB128GB/ciss")
@@ -116,6 +123,7 @@ class RingCube(CubeFile):
         print("Getting metadata from the online OPUS database.")
         self.opusmeta = MetaData(self.pm._id)
         print("Done.")
+        return self.opusmeta
 
     @property
     def meta_pixres(self):
@@ -184,7 +192,11 @@ class RingCube(CubeFile):
         extent_val = self.extent if set_extent else None
         min_, max_ = np.percentile(data[~np.isnan(data)], (plow, phigh))
         if ax is None:
-            fig, ax = plt.subplots(figsize=calc_4_3(8))
+            if not _SEABORN_INSTALLED:
+                fig, ax = plt.subplots(figsize=calc_4_3(9))
+            else:
+                sns.set_context('talk')
+                fig, ax = plt.subplots()
         ax.imshow(data, extent=extent_val, cmap='gray', vmin=min_, vmax=max_,
                   interpolation=interpolation, origin='lower',
                   aspect='auto', **kwargs)
