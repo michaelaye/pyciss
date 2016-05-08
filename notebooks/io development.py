@@ -1,156 +1,201 @@
 
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 from pyciss.io import RingCube, PathManager, db_mapped_cubes
 
 
-# In[ ]:
+# In[2]:
 
-all_mapped_cubes = db_mapped_cubes()
+all_mapped_cubes = list(db_mapped_cubes())
 
 
 # # meta development
 
-# In[ ]:
+# In[3]:
 
 from pyciss.meta import prime_resonances
 
 
-# In[ ]:
+# In[4]:
 
 get_ipython().magic('matplotlib nbagg')
 
 
-# In[ ]:
+# In[21]:
 
-cube = RingCube(next(all_mapped_cubes))
+cube = RingCube(all_mapped_cubes[5])
 cube.imshow()
 
 
-# In[ ]:
+# In[7]:
 
-cube.meta
-
-
-# In[ ]:
-
-dics = []
-for p in db_mapped_cubes():
+def get_all_meta_data(p):
+    from pyciss.io import RingCube
     d = {}
     d['path'] = p
     cube = RingCube(p)
+    opusmeta = cube.get_opus_meta_data()
     d['meta_res'] = cube.meta_pixres
     d['label_res'] = cube.resolution_val
     d['time'] = cube.imagetime
-    dics.append(d)
+    res1 = opusmeta.ring_geom['projected_radial_resolution1']
+    res2 = opusmeta.ring_geom['projected_radial_resolution2']
+    d['opusres'] = int((res1+res2)/2*1000)
+    return d
 
 
-# In[ ]:
+# In[6]:
 
-df = pd.DataFrame(dics)
+from ipyparallel import Client
+c = Client()
+lbview = c.load_balanced_view()
 
 
-# In[ ]:
+# In[9]:
+
+from nbtools import display_multi_progress
+
+
+# In[10]:
+
+results = lbview.map_async(get_all_meta_data, all_mapped_cubes)
+
+
+# In[11]:
+
+display_multi_progress(results, all_mapped_cubes)
+
+
+# In[12]:
+
+df = pd.DataFrame(results.result())
+df
+
+
+# In[14]:
+
+df.to_csv('all_meta.csv',index=False)
+
+
+# In[8]:
+
+df = pd.read_csv('all_meta.csv')
+
+
+# In[10]:
+
+df.columns
+
+
+# In[11]:
 
 df.head()
 
 
-# In[ ]:
+# In[12]:
 
-df['id'] = df.path.map(lambda x: x.name.split('_')[0])
+from pathlib import Path
 
 
-# In[ ]:
+# In[13]:
+
+df['id'] = df.path.map(lambda x: Path(x).name.split('_')[0])
+
+
+# In[14]:
+
+df.id.head()
+
+
+# In[15]:
 
 df.set_index('time',inplace=True)
 
 
-# In[ ]:
+# In[31]:
 
 df.set_index('id', inplace=True)
 
 
-# In[ ]:
+# In[16]:
 
 df = df.sort_index()
 
 
-# In[ ]:
+# In[18]:
 
-df.tail()
-
-
-# In[ ]:
-
-df['ratio'] = df.meta_res / df.label_res
+df.describe()
 
 
-# In[ ]:
+# In[20]:
 
-df[df.label_res<5000].plot(style='*')
+t0 = '2004-12'
+t1 = '2005-07'
+t2 = '2005-08'
+df[:t0].plot(style='*', logy=False, markersize=16, rot=25)
 
 
-# In[ ]:
+# In[18]:
 
 cube = RingCube(df[df.label_res>5000].path.values[0])
 
 
-# In[ ]:
+# In[19]:
 
 cube.imshow()
 
 
-# In[ ]:
+# In[36]:
 
 cube.imagetime
 
 
-# In[ ]:
+# In[22]:
 
 cube.get_opus_meta_data()
 
 
-# In[ ]:
+# In[26]:
 
 cube.opusmeta.ring_geom
 
 
 # # Resonances plotting
 
-# In[ ]:
+# In[1]:
 
 from pyciss.meta import prime_resonances as resonances
 from pyciss import io
 
 
-# In[ ]:
+# In[2]:
 
 resonances.head()
 
 
-# In[ ]:
+# In[53]:
 
 all_mapped_cubes = io.db_mapped_cubes()
 
 
-# In[ ]:
+# In[59]:
 
 get_ipython().magic('matplotlib inline')
 
 
-# In[ ]:
+# In[62]:
 
 cube = io.RingCube(next(all_mapped_cubes))
 
 
-# In[ ]:
+# In[63]:
 
 cube.imshow()
 
 
-# In[ ]:
+# In[52]:
 
 cube = io.RingCube(next(all_mapped_cubes))
 
@@ -164,22 +209,22 @@ ax2.set_yticks(newticks.radius/1000)
 ax2.set_yticklabels(newticks.name);
 
 
-# In[ ]:
+# In[33]:
 
 ax.get_ybound()
 
 
-# In[ ]:
+# In[34]:
 
 ax.get_ylim()
 
 
-# In[ ]:
+# In[35]:
 
 get_ipython().magic('pinfo2 ax.get_ylim')
 
 
-# In[ ]:
+# In[36]:
 
 get_ipython().magic('pinfo2 ax.get_ybound')
 
@@ -194,17 +239,17 @@ ax2 = ax.twinx
 ax.set_yticks(resonanc)
 
 
-# In[ ]:
+# In[96]:
 
 f = lambda x,y: (resonances['radius']>x) & (resonances['radius']<y)
 
 
-# In[ ]:
+# In[97]:
 
 resonances[f(134220, 134326)]
 
 
-# In[ ]:
+# In[93]:
 
 resonances.describe()
 
