@@ -1,10 +1,12 @@
 import os
 from socket import gethostname
 
+import configparser as cp
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 from pysis import CubeFile
+import pkg_resources as pr
 
 from .meta import all_resonances as resonances
 from .meta import meta_df
@@ -22,11 +24,14 @@ try:
 except ImportError:
     _SEABORN_INSTALLED = False
 
-hostname = gethostname()
-if hostname.startswith("MacL2938"):
-    dataroot = Path("/Volumes/USB128GB/ciss")
-else:
-    dataroot = Path('/Volumes/Data/ciss')
+configpath = pr.resource_filename('pyciss', 'config.ini')
+config = cp.ConfigParser()
+config.read(configpath)
+# just take first node as host name:
+hostname = gethostname().split('.')[0]
+section = hostname if hostname in config else 'DEFAULT'
+dataroot = Path(config[section]['database_path'])
+
 dbroot = dataroot / 'db'
 
 

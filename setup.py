@@ -13,7 +13,7 @@ setup(
     install_requires=['pandas>='+pandas_version, 'astropy'],
 
     package_data={
-        'pyciss': ['data/*']
+        'pyciss': ['data/*', 'config.ini']
     },
 
     # metadata
