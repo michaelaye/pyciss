@@ -45,20 +45,32 @@ def db_label_paths():
 
 class PathManager(object):
 
-    def __init__(self, _id):
+    """Manage paths to data in database.
 
-        if Path(_id).is_absolute():
-            self._id = Path(_id).name.split('_')[0]
+    The `config.ini` file determines the path to the database for ISS images.
+    With this class you can access the different kind of files conveniently.
+
+    Parameters
+    ----------
+    img_id : {str, pathlib.Path)
+        The N... or W... image identifier string of CISS images or the absolute
+        path to an existing image
+    """
+
+    def __init__(self, img_id):
+
+        if Path(img_id).is_absolute():
+            self._id = Path(img_id).name.split('_')[0]
         else:
-            self._id = _id
-        self._basepath = dbroot / _id
+            self._id = img_id
+        self._basepath = dbroot / img_id
 
     @property
     def basepath(self):
         return self._basepath
 
     @property
-    def id(self):
+    def img_id(self):
         return self._id
 
     def check_and_return(self, myiter):
@@ -71,19 +83,23 @@ class PathManager(object):
 
     @property
     def calib_img(self):
-        return self.check_and_return((dbroot / self.id).glob(self._id + "*_CALIB.IMG"))
+        return self.check_and_return((dbroot / self._id).glob(self._id + "*_CALIB.IMG"))
+
+    @property
+    def calib_label(self):
+        return self.check_and_return((dbroot / self._id).glob(self._id + "*_CALIB.LBL"))
 
     @property
     def raw_image(self):
-        return self.check_and_return((dbroot / self.id).glob(self._id + "*_?.IMG"))
+        return self.check_and_return((dbroot / self._id).glob(self._id + "*_?.IMG"))
 
     @property
     def raw_cub(self):
-        return self.check_and_return((dbroot / self.id).glob(self._id + "*_?.cub"))
+        return self.check_and_return((dbroot / self._id).glob(self._id + "*_?.cub"))
 
     @property
     def cal_cub(self):
-        return self.check_and_return((dbroot / self.id).glob(self._id + "*_?.cal.cub"))
+        return self.check_and_return((dbroot / self._id).glob(self._id + "*_?.cal.cub"))
 
     @property
     def raw_label(self):
@@ -120,7 +136,7 @@ class RingCube(CubeFile):
         super().__init__(fname, **kwargs)
         self.pm = PathManager(fname)
         try:
-            self.meta = meta_df.loc[self.pm.id]
+            self.meta = meta_df.loc[self.pm.img_id]
         except KeyError:
             self.meta = None
 

@@ -1,35 +1,132 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 from pyciss.io import RingCube, PathManager, db_mapped_cubes
+from pyciss import io
 
 
-# In[2]:
+# # database
 
-all_mapped_cubes = list(db_mapped_cubes())
+# In[ ]:
 
-
-# # meta development
-
-# In[3]:
-
-from pyciss.meta import prime_resonances
+io.dbroot
 
 
-# In[4]:
+# In[ ]:
+
+calibs = list(io.dbroot.glob("**/*_CALIB*"))
+
+
+# In[ ]:
+
+pm = PathManager(calibs[0])
+
+
+# In[ ]:
+
+pm.img_id
+
+
+# In[ ]:
+
+pm.calib_img
+
+
+# In[ ]:
+
+import gdal
+
+
+# In[ ]:
+
+gdal.UseExceptions()
+
+
+# In[ ]:
+
+ds = gdal.Open(pm.calib_label.as_posix())
+
+
+# In[ ]:
+
+orig_calib = ds.ReadAsArray()
+
+
+# In[ ]:
+
+ds = gdal.Open(pm.cal_cub.as_posix())
+new_calib = ds.ReadAsArray()
+new_calib[new_calib<0] = orig_calib.min()
+
+
+# In[ ]:
+
+diff = orig_calib - new_calib
+
+
+# In[ ]:
 
 get_ipython().magic('matplotlib nbagg')
 
 
-# In[21]:
+# In[ ]:
+
+from matplotlib.colors import LogNorm
+
+
+# In[ ]:
+
+plt.figure()
+plt.imshow(diff, cmap='viridis', norm=LogNorm())
+plt.colorbar()
+
+
+# In[ ]:
+
+orig_calib.max()
+
+
+# In[ ]:
+
+np.unique(np.isnan(orig_calib))
+
+
+# In[ ]:
+
+new_calib.max()
+
+
+# In[ ]:
+
+
+
+
+# In[ ]:
+
+plt.imshow(new_calib)
+
+
+# # meta development
+
+# In[ ]:
+
+from pyciss.meta import prime_resonances
+
+
+# In[ ]:
+
+get_ipython().magic('matplotlib nbagg')
+
+
+# In[ ]:
 
 cube = RingCube(all_mapped_cubes[5])
 cube.imshow()
 
 
-# In[7]:
+# In[ ]:
 
 def get_all_meta_data(p):
     from pyciss.io import RingCube
@@ -46,90 +143,90 @@ def get_all_meta_data(p):
     return d
 
 
-# In[6]:
+# In[ ]:
 
 from ipyparallel import Client
 c = Client()
 lbview = c.load_balanced_view()
 
 
-# In[9]:
+# In[ ]:
 
 from nbtools import display_multi_progress
 
 
-# In[10]:
+# In[ ]:
 
 results = lbview.map_async(get_all_meta_data, all_mapped_cubes)
 
 
-# In[11]:
+# In[ ]:
 
 display_multi_progress(results, all_mapped_cubes)
 
 
-# In[12]:
+# In[ ]:
 
 df = pd.DataFrame(results.result())
 df
 
 
-# In[14]:
+# In[ ]:
 
 df.to_csv('all_meta.csv',index=False)
 
 
-# In[8]:
+# In[ ]:
 
 df = pd.read_csv('all_meta.csv')
 
 
-# In[10]:
+# In[ ]:
 
 df.columns
 
 
-# In[11]:
+# In[ ]:
 
 df.head()
 
 
-# In[12]:
+# In[ ]:
 
 from pathlib import Path
 
 
-# In[13]:
+# In[ ]:
 
 df['id'] = df.path.map(lambda x: Path(x).name.split('_')[0])
 
 
-# In[14]:
+# In[ ]:
 
 df.id.head()
 
 
-# In[15]:
+# In[ ]:
 
 df.set_index('time',inplace=True)
 
 
-# In[31]:
+# In[ ]:
 
 df.set_index('id', inplace=True)
 
 
-# In[16]:
+# In[ ]:
 
 df = df.sort_index()
 
 
-# In[18]:
+# In[ ]:
 
 df.describe()
 
 
-# In[20]:
+# In[ ]:
 
 t0 = '2004-12'
 t1 = '2005-07'
@@ -137,65 +234,65 @@ t2 = '2005-08'
 df[:t0].plot(style='*', logy=False, markersize=16, rot=25)
 
 
-# In[18]:
+# In[ ]:
 
 cube = RingCube(df[df.label_res>5000].path.values[0])
 
 
-# In[19]:
+# In[ ]:
 
 cube.imshow()
 
 
-# In[36]:
+# In[ ]:
 
 cube.imagetime
 
 
-# In[22]:
+# In[ ]:
 
 cube.get_opus_meta_data()
 
 
-# In[26]:
+# In[ ]:
 
 cube.opusmeta.ring_geom
 
 
 # # Resonances plotting
 
-# In[1]:
+# In[ ]:
 
 from pyciss.meta import prime_resonances as resonances
 from pyciss import io
 
 
-# In[2]:
+# In[ ]:
 
 resonances.head()
 
 
-# In[53]:
+# In[ ]:
 
 all_mapped_cubes = io.db_mapped_cubes()
 
 
-# In[59]:
+# In[ ]:
 
 get_ipython().magic('matplotlib inline')
 
 
-# In[62]:
+# In[ ]:
 
 cube = io.RingCube(next(all_mapped_cubes))
 
 
-# In[63]:
+# In[ ]:
 
 cube.imshow()
 
 
-# In[52]:
+# In[ ]:
 
 cube = io.RingCube(next(all_mapped_cubes))
 
@@ -209,22 +306,22 @@ ax2.set_yticks(newticks.radius/1000)
 ax2.set_yticklabels(newticks.name);
 
 
-# In[33]:
+# In[ ]:
 
 ax.get_ybound()
 
 
-# In[34]:
+# In[ ]:
 
 ax.get_ylim()
 
 
-# In[35]:
+# In[ ]:
 
 get_ipython().magic('pinfo2 ax.get_ylim')
 
 
-# In[36]:
+# In[ ]:
 
 get_ipython().magic('pinfo2 ax.get_ybound')
 
@@ -239,17 +336,17 @@ ax2 = ax.twinx
 ax.set_yticks(resonanc)
 
 
-# In[96]:
+# In[ ]:
 
 f = lambda x,y: (resonances['radius']>x) & (resonances['radius']<y)
 
 
-# In[97]:
+# In[ ]:
 
 resonances[f(134220, 134326)]
 
 
-# In[93]:
+# In[ ]:
 
 resonances.describe()
 
