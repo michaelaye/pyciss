@@ -1,13 +1,14 @@
 pyciss
 ======
 
-[![Join the chat at https://gitter.im/michaelaye/pyciss](https://badges.gitter.im/michaelaye/pyciss.svg)](https://gitter.im/michaelaye/pyciss?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Python utilities to work with Cassini's ISS camera system
 
 If you use this software, please consider citing it:
 
-[![DOI](https://zenodo.org/badge/15486/michaelaye/pyciss.svg)](https://zenodo.org/badge/latestdoi/15486/michaelaye/pyciss)
+.. image:: https://zenodo.org/badge/15486/michaelaye/pyciss.svg
+   :target: https://zenodo.org/badge/latestdoi/15486/michaelaye/pyciss
+
 
 Acknowledgements:
 Thanks go to
