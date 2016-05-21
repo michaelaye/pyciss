@@ -24,7 +24,7 @@ DOWNLOAD_URL = "https://github.com/michaelaye/pyciss"
 
 setup(
     name=DISTNAME,
-    version="0.2.1",
+    version="0.3.0",
     packages=find_packages(),
 
     install_requires=['pandas'],
