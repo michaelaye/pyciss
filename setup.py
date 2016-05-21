@@ -6,6 +6,8 @@ Toolkit for handling image data of Cassini's Imaging Science Subsystem camera.
 
 Please refer to the online documentation at
 http://pyciss.readthedocs.org
+
+and the homepage at https://github.com/michaelaye/pyciss
 """
 
 DISTNAME = 'pyciss'
@@ -38,8 +40,9 @@ setup(
     maintainer_email=AUTHOR_EMAIL,
     description=DESCRIPTION,
     license=LICENSE,
-    keywords="CASSINI ISS",
-    url="http://lasp.colorado.edu",
+    keywords=KEYWORDS,
+    url=URL,
+    download_url=DOWNLOAD_URL,
 
     classifiers=[
         'Development Status :: 4 - Beta',

@@ -6,8 +6,6 @@ from os.path import join as pjoin
 
 import numpy as np
 from pathlib import Path
-from pyciss import plotting
-from pyciss.io import dataroot
 from pysis import IsisPool
 from pysis.isis import (ciss2isis, cisscal, dstripe, editlab, getkey, isis2std,
                         ringscam2map, spiceinit)
