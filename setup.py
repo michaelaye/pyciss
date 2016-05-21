@@ -39,6 +39,7 @@ setup(
     author_email=AUTHOR_EMAIL,
     maintainer_email=AUTHOR_EMAIL,
     description=DESCRIPTION,
+    long_description=descr,
     license=LICENSE,
     keywords=KEYWORDS,
     url=URL,
