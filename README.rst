@@ -1,13 +1,21 @@
 pyciss
 ======
 
-
 Python utilities to work with Cassini's ISS camera system
 
+Fair use
+--------
 If you use this software, please consider citing it:
 
 .. image:: https://zenodo.org/badge/15486/michaelaye/pyciss.svg
    :target: https://zenodo.org/badge/latestdoi/15486/michaelaye/pyciss
+
+Documentation
+-------------
+
+.. image:: https://readthedocs.org/projects/pyciss/badge/?version=latest
+:target: http://pyciss.readthedocs.io/en/latest/?badge=latest
+:alt: Documentation Status
 
 Installation
 ------------
