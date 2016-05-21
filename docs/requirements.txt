@@ -1,2 +1,2 @@
 sphinxcontrib-bibtex
-PIL
+Pillow
