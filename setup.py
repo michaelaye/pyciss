@@ -1,3 +1,5 @@
+from setuptools import setup, find_packages
+
 descr = """pyciss
 
 Toolkit for handling image data of Cassini's Imaging Science Subsystem camera.
@@ -17,17 +19,13 @@ LICENSE = "ISC"
 KEYWORDS = ['CASSINI', 'science', 'saturn', 'imaging']
 DOWNLOAD_URL = "https://github.com/michaelaye/pyciss"
 
-from setuptools import setup, find_packages
-
-pandas_version = '0.17.1'
-
 
 setup(
     name=DISTNAME,
-    version="0.3",
+    version="0.2.0",
     packages=find_packages(),
 
-    install_requires=['pandas>='+pandas_version, 'astropy'],
+    install_requires=['pandas'],
 
     package_data={
         'pyciss': ['data/*', 'config.ini']

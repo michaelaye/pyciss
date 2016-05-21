@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 # from skimage.exposure import equalize_hist
 from ipywidgets import interact, fixed
 import numpy as np
-# import gdal
 
 
 interpolators = ['none', 'nearest', 'bilinear', 'bicubic',
@@ -36,18 +35,6 @@ def myinteract(img):
     delta = round((p30-min_)/50, 5)
     interact(myimshow, img=fixed(img), vmin=(min_, p30, delta),
              vmax=(p70, max_, delta), i=(0, len(interpolators)-1))
-
-
-# def gdal_explorer(fnames):
-#     def imshow(img_number, vmin, vmax, cmap='gray'):
-#         fig, ax = plt.subplots(nrows=2, figsize=(10, 10))
-#         ax, ax2 = ax
-#         ds = gdal.Open(fnames[img_number])
-#         data = ds.ReadAsArray()
-#         try:
-#             data[data < -2e+38] = np.NaN
-#         except ValueError:
-#             pass
 
 
 def imshowlowhigh(data, low=10, high=90):

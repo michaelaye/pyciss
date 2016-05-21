@@ -4,7 +4,6 @@ from __future__ import division, print_function
 import os
 from os.path import join as pjoin
 
-import gdal
 import numpy as np
 from pathlib import Path
 from pyciss import plotting
@@ -81,19 +80,8 @@ def remove_mean_value(data, axis=1):
     return subtracted
 
 
-def process_image(fname):
-    ds = gdal.Open(fname)
-    data = ds.ReadAsArray()
-    data[data < -2e+38] = np.nan
-    subtracted = remove_mean_value(data, axis=1)
-    fig = plotting.imshowlowhigh(subtracted)
-    savename = pjoin(dataroot, 'pipeline_out')
-    fig.savefig(pjoin(savename, fname+'.png'), dpi=150)
-
-
 def pipeline(fname):
     try:
         map_name = calibrate_ciss(fname)
-        process_image(map_name)
     except AttributeError:
         return "Problem with {}".format(fname)
