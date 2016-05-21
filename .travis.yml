@@ -24,7 +24,7 @@ install:
   # - pip install pytest-cov
   - pip install coveralls
   - pip install versioneer
-  - pip install git+ssh://github.com:wtolson/pysis.git@v6.0
+  - pip install https://github.com/wtolson/pysis/archive/0.6.0.zip
   - pip install pytest-ipynb
   - pip install --pre .
 
