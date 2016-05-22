@@ -7,8 +7,8 @@ Fair use
 --------
 If you use this software, please consider citing it:
 
-.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.51797.svg
-    :target: http://dx.doi.org/10.5281/zenodo.51797
+.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.51824.svg
+    :target: http://dx.doi.org/10.5281/zenodo.51824
 
 Documentation
 -------------
