@@ -10,7 +10,6 @@ If you use this software, please consider citing it:
 .. image:: https://zenodo.org/badge/doi/10.5281/zenodo.51824.svg
     :target: http://dx.doi.org/10.5281/zenodo.51824
 
-
 Bibtex record::
 
     @misc{k_michael_aye_2016_51824,
