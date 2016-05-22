@@ -1,18 +1,9 @@
-from setuptools import setup, find_packages
+from os import path
 
-descr = """pyciss
-
-Toolkit for handling image data of Cassini's Imaging Science Subsystem camera.
-
-Please refer to the online documentation at
-http://pyciss.readthedocs.org
-
-and the homepage at https://github.com/michaelaye/pyciss
-"""
+from setuptools import find_packages, setup
 
 DISTNAME = 'pyciss'
 DESCRIPTION = "Software for handling Cassini ISS data"
-LONG_DESCRIPTION = descr
 AUTHOR = "K.-Michael Aye"
 AUTHOR_EMAIL = "michael.aye@lasp.colorado.edu"
 MAINTAINER_EMAIL = AUTHOR_EMAIL
@@ -21,6 +12,10 @@ LICENSE = "ISC"
 KEYWORDS = ['CASSINI', 'science', 'saturn', 'imaging']
 DOWNLOAD_URL = "https://github.com/michaelaye/pyciss"
 
+here = path.abspath(path.dirname(__file__))
+# Get the long description from the README file
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+    LONG_DESCRIPTION = f.read()
 
 setup(
     name=DISTNAME,
@@ -39,7 +34,7 @@ setup(
     author_email=AUTHOR_EMAIL,
     maintainer_email=AUTHOR_EMAIL,
     description=DESCRIPTION,
-    long_description=descr,
+    long_description=LONG_DESCRIPTION,
     license=LICENSE,
     keywords=KEYWORDS,
     url=URL,

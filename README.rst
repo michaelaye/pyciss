@@ -17,6 +17,11 @@ Documentation
 :target: http://pyciss.readthedocs.io/en/latest/?badge=latest
 :alt: Documentation Status
 
+Homepage
+--------
+
+https://github.com/michaelaye/pyciss
+
 Installation
 ------------
 
