@@ -10,15 +10,20 @@ import tempfile
 from pathlib import Path
 tmpdir = tempfile.TemporaryDirectory()
 opus = OPUS()
-opus.query_image_id('N1695760475_1')
+img_id = 'N1695760475'
+opus.query_image_id(img_id)
 opus.download_results(savedir = tmpdir.name)
 
 
 # In[ ]:
 
-# test_image_time
-import datetime as dt
-pathmanager = io.PathManager('N1695760475')
-# cube = ringcube.RingCube(pathmanager.cal_cub)
-# assert cube.imagetime == dt.datetime(2004, 7, 1, 3, 33, 9, 285000)
+# test_PathManager
+pathmanager = io.PathManager(img_id, savedir=tmpdir.name)
+assert pathmanager.raw_image == Path(tmpdir.name) / img_id / (img_id+'_1.IMG')
+assert pathmanager.cubepath == Path(tmpdir.name) / img_id / (img_id+'_1.cal.dst.map.cub')
+
+
+# In[ ]:
+
+
 

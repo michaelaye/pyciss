@@ -70,9 +70,9 @@ class PathManager(object):
         else:
             self._id = img_id
         if savedir is not None:
-            self._basepath = Path(savedir) / img_id
+            self._basepath = Path(savedir) / self._id
         else:
-            self._basepath = dbroot / img_id
+            self._basepath = dbroot / self._id
 
     @property
     def basepath(self):
@@ -92,23 +92,23 @@ class PathManager(object):
 
     @property
     def calib_img(self):
-        return self.check_and_return((dbroot / self._id).glob(self._id + "*_CALIB.IMG"))
+        return self.check_and_return((self._basepath).glob(self._id + "*_CALIB.IMG"))
 
     @property
     def calib_label(self):
-        return self.check_and_return((dbroot / self._id).glob(self._id + "*_CALIB.LBL"))
+        return self.check_and_return((self._basepath).glob(self._id + "*_CALIB.LBL"))
 
     @property
     def raw_image(self):
-        return self.check_and_return((dbroot / self._id).glob(self._id + "*_?.IMG"))
+        return self.check_and_return((self._basepath).glob(self._id + "*_?.IMG"))
 
     @property
     def raw_cub(self):
-        return self.check_and_return((dbroot / self._id).glob(self._id + "*_?.cub"))
+        return self.check_and_return((self._basepath).glob(self._id + "*_?.cub"))
 
     @property
     def cal_cub(self):
-        return self.check_and_return((dbroot / self._id).glob(self._id + "*_?.cal.cub"))
+        return self.check_and_return((self._basepath).glob(self._id + "*_?.cal.cub"))
 
     @property
     def raw_label(self):
