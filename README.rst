@@ -52,6 +52,12 @@ github
 followed by:
 :code:`cd pyciss && pip install .`
 
+Continuous Integration
+----------------------
+
+.. image:: https://travis-ci.org/michaelaye/pyciss.svg?branch=master
+    :target: https://travis-ci.org/michaelaye/pyciss
+
 Acknowledgements
 ----------------
 
