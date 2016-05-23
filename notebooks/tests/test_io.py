@@ -1,21 +1,24 @@
 
 # coding: utf-8
 
-# In[11]:
+# In[ ]:
 
-from pyciss import io
-import datetime as dt
-
-
-# In[12]:
-
-# test_image_time
-cube = io.RingCube("/Volumes/Data/ciss/opus/N1467345444/N1467345444_2.cal.cub")
-assert cube.imagetime == dt.datetime(2004, 7, 1, 3, 33, 9, 285000)
+# setup
+from pyciss import io, ringcube
+from pyciss.opusapi import OPUS
+import tempfile
+from pathlib import Path
+tmpdir = tempfile.TemporaryDirectory()
+opus = OPUS()
+opus.query_image_id('N1695760475_1')
+opus.download_results(savedir = tmpdir.name)
 
 
 # In[ ]:
 
-# test_survival
+# test_image_time
+import datetime as dt
+pathmanager = io.PathManager('N1467345444', savedir=tmpdir.name)
+cube = ringcube.RingCube(pathmanager.cal_cub)
 assert cube.imagetime == dt.datetime(2004, 7, 1, 3, 33, 9, 285000)
 
