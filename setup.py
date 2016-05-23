@@ -19,7 +19,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name=DISTNAME,
-    version="0.3.2",
+    version="0.4.0",
     packages=find_packages(),
 
     install_requires=['pandas'],
