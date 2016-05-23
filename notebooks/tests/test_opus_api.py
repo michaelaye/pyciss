@@ -35,7 +35,7 @@ assert (Path(tmpdir.name) / 'N1695760475' / 'N1695760475_1.LBL').exists()
 
 # In[ ]:
 
-# test_download_previews()
+# test_download_previews
 opus.download_previews(savedir=tmpdir.name)
 assert (Path(tmpdir.name) / 'N1695760475' / 'N1695760475_1_med.jpg').exists()
 
