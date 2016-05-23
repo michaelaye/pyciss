@@ -31,7 +31,7 @@ install:
 # command to run tests, e.g. python setup.py test
 script:
     # - py.test -s --cov .
-    - cd notebooks/tests
+    - cd pyciss/tests
     - py.test -v
 
 after_success:
