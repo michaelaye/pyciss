@@ -1,8 +1,5 @@
 from __future__ import division, print_function
 
-import os
-import os.path as path
-
 import requests
 from IPython.display import HTML
 from pathlib import Path
@@ -17,12 +14,9 @@ except ImportError:
     from urlparse import urlparse
     from urllib import urlretrieve, urlencode
 
-
-HOME = os.environ['HOME']
 base_url = 'http://pds-rings-tools.seti.org/opus/api'
-details_url = base_url + 'metadata/'
-image_url = base_url + 'image/'
-images_url = base_url + 'images/'
+metadata_url = base_url + '/metadata/'
+image_url = base_url + '/image/'
 
 srings_ciss_query = {'target': 'S+RINGS',
                      'instrumentid': 'Cassini+ISS'}
@@ -32,8 +26,9 @@ class MetaData(object):
 
     def __init__(self, img_id):
         urlname = "S_IMG_CO_ISS_{}_{}.json".format(img_id[1:], img_id[0])
-        urlbase = "http://pds-rings-tools.seti.org/opus/api/metadata/"
-        self.r = requests.get(urlbase+urlname).json()
+        fullurl = metadata_url + urlname
+        print("Requesting", fullurl)
+        self.r = requests.get(fullurl).json()
 
     @property
     def image(self):
@@ -161,25 +156,8 @@ class OPUS(object):
         self.unpack_json_response()
         return self.obsids
 
-    def get_image(self, obsid, size='med', return_url=False):
-        """size can be thumb,small,med,full """
-        r = requests.get("{image_url}{size}/{obsid}.html"
-                         .format(image_url=obsid.image_url,
-                                 size=size,
-                                 obsid=obsid))
-        if return_url:
-            return r.url
-        else:
-            return HTML(r.text)
-
-    def get_details(self, obsid, fmt='html', get_response=False):
-        r = requests.get(obsid.details_url + obsid + '.' + fmt)
-        if get_response:
-            return r
-        elif fmt == 'html':
-            return HTML(r.text)
-        elif fmt == 'json':
-            return r.json()
+    def get_metadata(self, obsid, fmt='html', get_response=False):
+        return MetaData(obsid.img_id)
 
     def create_request_with_query(self, kind, query, size='thumb', fmt='json'):
         """api/data.[fmt], api/images/[size].[fmt] api/files.[fmt]
@@ -226,6 +204,13 @@ class OPUS(object):
         self.unpack_json_response()
 
     def show_images(self, size='small'):
+        """Shows preview images using the Jupyter notebook HTML display.
+
+        Parameters
+        ==========
+        size : {'small', 'med', 'thumb', 'full'}
+            Determines the size of the preview image to be shown.
+        """
         d = dict(small=256, med=512, thumb=100, full=1024)
         width = d[size]
         img_urls = [i.get_img_url(size) for i in self.obsids]
