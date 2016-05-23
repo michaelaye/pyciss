@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 # setup
 from pyciss import opusapi
@@ -17,7 +17,7 @@ opus = opusapi.OPUS()
 opus.query_image_id('N1695760475')
 
 
-# In[ ]:
+# In[2]:
 
 # test_query_results
 baseurl = 'http://pds-rings.seti.org/volumes/COISS_2xxx/COISS_2069/data/'
@@ -25,7 +25,7 @@ res = baseurl + '1695427520_1695761375/N1695760475_1.LBL'
 assert opus.obsids[0].raw.label_url == res
 
 
-# In[ ]:
+# In[3]:
 
 # test_download_results
 opus.download_results(savedir=tmpdir.name)
@@ -33,14 +33,14 @@ assert (Path(tmpdir.name) / 'N1695760475' / 'N1695760475_1.IMG').exists()
 assert (Path(tmpdir.name) / 'N1695760475' / 'N1695760475_1.LBL').exists()
 
 
-# In[ ]:
+# In[4]:
 
 # test_download_previews
 opus.download_previews(savedir=tmpdir.name)
 assert (Path(tmpdir.name) / 'N1695760475' / 'N1695760475_1_med.jpg').exists()
 
 
-# In[ ]:
+# In[5]:
 
 # test_get_metadata
 meta = opus.get_metadata(opus.obsids[0])
@@ -51,13 +51,8 @@ assert meta.iss['GAIN_MODE_ID'] == '29 ELECTRONS PER DN'
 assert meta.surface['center_phase_angle'] == 63.708
 
 
-# In[ ]:
+# In[6]:
 
 # cleanup
 tmpdir.cleanup()
-
-
-# In[ ]:
-
-
 
