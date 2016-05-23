@@ -7,18 +7,20 @@ Fair use
 --------
 If you use this software, please consider citing it:
 
-.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.51824.svg
-    :target: http://dx.doi.org/10.5281/zenodo.51824
+.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.51899.svg
+   :target: http://dx.doi.org/10.5281/zenodo.51899
 
 Bibtex record::
 
-    @misc{k_michael_aye_2016_51824,
+    @misc{k_michael_aye_2016_51899,
       author       = {K.-Michael Aye},
-      title        = {pyciss: v0.3.2},
+      title        = {pyciss},
+      version      = {v0.4.1},
+      publisher    = {Zenodo},
       month        = may,
       year         = 2016,
-      doi          = {10.5281/zenodo.51824},
-      url          = {http://dx.doi.org/10.5281/zenodo.51824}
+      doi          = {10.5281/zenodo.51899},
+      url          = {http://dx.doi.org/10.5281/zenodo.51899}
     }
 
 Documentation
