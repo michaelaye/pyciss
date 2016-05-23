@@ -1,4 +1,14 @@
-from __future__ import print_function, division
+from __future__ import division, print_function
+
+import os
+import os.path as path
+
+import requests
+from IPython.display import HTML
+from pathlib import Path
+
+from . import io
+
 try:
     from urllib.request import unquote, urlretrieve
     from urllib.parse import urlparse, urlencode
@@ -6,11 +16,6 @@ except ImportError:
     from urllib2 import unquote
     from urlparse import urlparse
     from urllib import urlretrieve, urlencode
-import requests
-from IPython.display import HTML
-import os.path as path
-import os
-from socket import gethostname
 
 
 HOME = os.environ['HOME']
@@ -21,12 +26,6 @@ images_url = base_url + 'images/'
 
 srings_ciss_query = {'target': 'S+RINGS',
                      'instrumentid': 'Cassini+ISS'}
-
-host = gethostname()
-if host == 'ringsvm':
-    savepath = '/usr/local/ringsdata/opus'
-else:
-    savepath = path.join(HOME, 'data', 'ciss', 'opus')
 
 
 class MetaData(object):
@@ -69,7 +68,7 @@ class MetaData(object):
         return self.r['Saturn Surface Geometry']
 
 
-class OPUSImage(object):
+class OPUSImageURL(object):
 
     """Manage URLS from the OPUS response."""
 
@@ -96,15 +95,23 @@ class OPUSObsID(object):
 
     def __init__(self, obsid_data):
         self.idname = obsid_data[0]
-        self.raw = OPUSImage(obsid_data[1]['RAW_IMAGE'])
+        self.raw = OPUSImageURL(obsid_data[1]['RAW_IMAGE'])
+        # the images have an iteration number. I'm fishing it out here:
+        self.number = self.raw.image_url.split('_')[-1][0]
         try:
-            self.calib = OPUSImage(obsid_data[1]['CALIBRATED'])
+            self.calib = OPUSImageURL(obsid_data[1]['CALIBRATED'])
         except KeyError:
             self.calib = None
 
     def get_img_url(self, size):
         base = self.raw.label_url[:-4].replace('volumes', 'browse')
         return "{}_{}.jpg".format(base, size)
+
+    @property
+    def img_id(self):
+        """Convert OPUS ObsID into the more known image_id."""
+        tokens = self.idname.split('_')
+        return ''.join(tokens[-2:][::-1])
 
     @property
     def small_img_url(self):
@@ -147,7 +154,7 @@ class OPUS(object):
     def get_image(self, obsid, size='med', return_url=False):
         """size can be thumb,small,med,full """
         r = requests.get("{image_url}{size}/{obsid}.html"
-                         .format(image_url=self.image_url,
+                         .format(image_url=obsid.image_url,
                                  size=size,
                                  obsid=obsid))
         if return_url:
@@ -156,7 +163,7 @@ class OPUS(object):
             return HTML(r.text)
 
     def get_details(self, obsid, fmt='html', get_response=False):
-        r = requests.get(self.details_url + obsid + '.' + fmt)
+        r = requests.get(obsid.details_url + obsid + '.' + fmt)
         if get_response:
             return r
         elif fmt == 'html':
@@ -218,19 +225,35 @@ class OPUS(object):
                               .format(width, s) for s in img_urls])
         return HTML(imagesList)
 
-    def download_results(self, targetfolder=None):
-        if targetfolder is not None:
-            currentsavepath = path.join(savepath, targetfolder)
-        else:
-            currentsavepath = savepath
-        for obsid in self.obsids:
-            for url in [obsid.raw.image_url, obsid.raw.label_url]:
-                basename = path.basename(url)
-                print("Downloading", basename)
-                urlretrieve(url, path.join(currentsavepath, basename))
+    def download_results(self, savedir=None):
+        """Download the previously found and stored Opus obsids.
 
-    def download_previews(self):
+        Parameters
+        ==========
+        savedir: str or pathlib.Path, optional
+            If the database root folder as defined by the config.ini should not be used,
+            provide a different savedir here. It will be handed to PathManager.
+        """
         for obsid in self.obsids:
-            basename = path.basename(obsid.medium_img_url)
+            pm = io.PathManager(obsid.img_id, savedir=savedir)
+            pm.basepath.mkdir(exist_ok=True)
+            for url in [obsid.raw.image_url, obsid.raw.label_url]:
+                basename = Path(url).name
+                print("Downloading", basename)
+                urlretrieve(url, str(pm.basepath / basename))
+
+    def download_previews(self, savedir=None):
+        """Download preview files for the previously found and stored Opus obsids.
+
+        Parameters
+        ==========
+        savedir: str or pathlib.Path, optional
+            If the database root folder as defined by the config.ini should not be used,
+            provide a different savedir here. It will be handed to PathManager.
+        """
+        for obsid in self.obsids:
+            pm = io.PathManager(obsid.img_id, savedir=savedir)
+            pm.basepath.mkdir(exist_ok=True)
+            basename = Path(obsid.medium_img_url).name
             print("Downloading", basename)
-            urlretrieve(obsid.medium_img_url, path.join(savepath, basename))
+            urlretrieve(obsid.medium_img_url, str(pm.basepath / basename))
