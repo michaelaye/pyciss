@@ -209,14 +209,8 @@ class OPUS(object):
         self.unpack_json_response()
 
     def show_images(self, size='small'):
-        if size == 'small':
-            width = 256
-        elif size == 'med':
-            width = 512
-        elif size == 'thumb':
-            width = 100
-        elif size == 'full':
-            width = 1024
+        d = dict(small=256, med=512, thumb=100, full=1024)
+        width = d[size]
         img_urls = [i.get_img_url(size) for i in self.obsids]
         imagesList = ''.join(["<img style='width: {0}px; margin: 0px; float: "
                               "left; border: 1px solid black;' "
