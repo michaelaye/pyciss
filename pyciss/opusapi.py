@@ -136,17 +136,27 @@ class OPUSObsID(object):
 
 class OPUS(object):
 
-    """Manage OPUS API requests."""
+    """Manage OPUS API requests.
 
-    def get_filename(self, fname):
-        """Receive CISS image via it's filename.
 
-        This example receives an image of Titan:
+    """
+
+    def query_image_id(self, image_id):
+        """Query OPUS via the image_id.
+
+        This is a query using the 'primaryfilespec' field of the OPUS database.
+        It returns a list of URLS into the `obsids` attribute.
+
+        This example queries for an image of Titan:
 
         >>> opus = opusapi.OPUS()
-        >>> opus.get_filename('N1695760475_1')
+        >>> opus.query_image_id('N1695760475_1')
+
+        After this, one can call `download_results()` to retrieve the found
+        data into the standard locations into the database_path as defined in
+        config.ini.
         """
-        myquery = {'primaryfilespec': fname}
+        myquery = {'primaryfilespec': image_id}
         self.create_files_request(myquery, fmt='json')
         self.unpack_json_response()
         return self.obsids
