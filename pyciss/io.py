@@ -19,6 +19,7 @@ section = hostname if hostname in config else 'DEFAULT'
 dataroot = Path(config[section]['database_path'])
 
 dbroot = dataroot / 'db'
+dbroot.mkdir(exist_ok=True)
 
 
 def set_database_path(dbfolder, _append=False, _testhostname=None):
@@ -39,6 +40,7 @@ def set_database_path(dbfolder, _append=False, _testhostname=None):
     with open(configpath, mode) as fp:
         config.write(fp)
     print("Saved database path into {}.".format(configpath))
+    print("Please restart your Python to activate the new path settings.")
 
 
 def db_mapped_cubes():
