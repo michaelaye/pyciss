@@ -14,12 +14,9 @@ except ImportError:
     from urlparse import urlparse
     from urllib import urlretrieve, urlencode
 
-base_url = 'http://pds-rings-tools.seti.org/opus/api'
+base_url = 'http://tools.pds-rings.seti.org/opus/api'
 metadata_url = base_url + '/metadata/'
 image_url = base_url + '/image/'
-
-srings_ciss_query = {'target': 'S+RINGS',
-                     'instrumentid': 'Cassini+ISS'}
 
 
 class MetaData(object):
@@ -192,11 +189,26 @@ class OPUS(object):
         self.obsids = obsids
         print('Found {} obsids.'.format(len(obsids)))
 
-    def get_radial_res_query(self, res1='', res2=0.5):
-        myquery = srings_ciss_query.copy()
-        myquery['projectedradialresolution1'] = res1
-        myquery['projectedradialresolution2'] = res2
+    def get_radial_res_query(self, res1, res2):
+        myquery = dict(target='S+RINGS', instrumentid='Cassini+ISS',
+                       projectedradialresolution1=res1,
+                       projectedradialresolution2=res2)
         return myquery
+
+    def get_time_query(self, t1, t2):
+        myquery = dict(instrumentid='Cassini+ISS',
+                       timesec1=t1, timesec2=t2)
+        return myquery
+
+    def get_between_times(self, t1, t2):
+        try:
+            t1 = t1.isoformat()
+            t2 = t2.isoformat()
+        except AttributeError:
+            pass
+        myquery = self.get_time_query(t1, t2)
+        self.create_files_request(myquery, fmt='json')
+        self.unpack_json_response()
 
     def get_between_resolutions(self, res1='', res2='0.5'):
         myquery = self.get_radial_res_query(res1, res2)
