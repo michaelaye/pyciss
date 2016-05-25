@@ -3,6 +3,11 @@ pyciss
 
 Python utilities to work with Cassini's ISS camera system
 
+.. image:: http://img.shields.io/pypi/v/pyciss.svg?style=flat
+   :target: https://pypi.python.org/pypi/pyciss/
+   :alt: Latest PyPI version
+
+
 Fair use
 --------
 If you use this software, please consider citing it:
