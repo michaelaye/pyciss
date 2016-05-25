@@ -12,20 +12,20 @@ Fair use
 --------
 If you use this software, please consider citing it:
 
-.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.51899.svg
-   :target: http://dx.doi.org/10.5281/zenodo.51899
+.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.53092.svg
+   :target: http://dx.doi.org/10.5281/zenodo.53092
 
 Bibtex record::
 
-    @misc{k_michael_aye_2016_51899,
+    @misc{k_michael_aye_2016_53092,
       author       = {K.-Michael Aye},
       title        = {pyciss},
-      version      = {v0.4.1},
+      version      = {0.5.0},
       publisher    = {Zenodo},
       month        = may,
       year         = 2016,
-      doi          = {10.5281/zenodo.51899},
-      url          = {http://dx.doi.org/10.5281/zenodo.51899}
+      doi          = {10.5281/zenodo.53092},
+      url          = {http://dx.doi.org/10.5281/zenodo.53092}
     }
 
 Documentation
