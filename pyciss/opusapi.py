@@ -184,6 +184,7 @@ class OPUS(object):
     def unpack_json_response(self):
         if self.r.status_code == 500:
             print("No data found.")
+            self.obsids = []
             return
         response = self.r.json()['data']
         obsids = []
