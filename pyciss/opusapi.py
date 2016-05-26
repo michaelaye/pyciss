@@ -182,6 +182,9 @@ class OPUS(object):
     #     self.create_request_with_query('data', myquery, fmt=fmt)
 
     def unpack_json_response(self):
+        if self.r.status_code == 500:
+            print("No data found.")
+            return
         response = self.r.json()['data']
         obsids = []
         for obsid_data in response.items():
