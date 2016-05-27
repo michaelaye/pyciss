@@ -1,7 +1,12 @@
+"""This module is making use of the
+`OPUS API <http://pds-rings-tools.seti.org/opus/api/>`_ to create web request
+for OPUS data, metadata, and preview images.
+"""
 from __future__ import division, print_function
 
+import pandas as pd
 import requests
-from IPython.display import HTML
+from IPython.display import HTML, display
 from pathlib import Path
 
 from . import io
@@ -20,6 +25,14 @@ image_url = base_url + '/image/'
 
 
 class MetaData(object):
+    """Receive OPUS Metadata for ISS img_id.
+
+    Parameters
+    ----------
+    img_id : str
+        In the form of {'N','W'}0123456789, the image id used in science publications
+
+    """
 
     def __init__(self, img_id):
         urlname = "S_IMG_CO_ISS_{}_{}.json".format(img_id[1:], img_id[0])
@@ -29,34 +42,42 @@ class MetaData(object):
 
     @property
     def image(self):
+        """dict: image constraints dictionary of the metadata"""
         return self.r['Image Constraints']
 
     @property
     def wavelength(self):
+        """dict: wavelength constraints dictionary of the metadata"""
         return self.r['Wavelength Constraints']
 
     @property
     def surface_geom(self):
+        """dict: Cassini surface geometry dictionary of the metadata"""
         return self.r['Cassini Surface Geometry']
 
     @property
     def mission(self):
+        """dict: Mission related metadata dictionary"""
         return self.r['Cassini Mission Constraints']
 
     @property
     def ring_geom(self):
+        """dict: Ring geometry metadata dictionary"""
         return self.r['Ring Geometry Constraints']
 
     @property
     def general(self):
+        """dict: general metadata dictionary"""
         return self.r['General Constraints']
 
     @property
     def iss(self):
+        """dict: ISS instrument related metadata dictionary"""
         return self.r['Cassini ISS Constraints']
 
     @property
     def surface(self):
+        """dict: Saturn surface geometry metadata dictionary"""
         return self.r['Saturn Surface Geometry']
 
 

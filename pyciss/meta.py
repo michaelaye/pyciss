@@ -1,3 +1,7 @@
+"""This module deals with the metadata I have received from collaborators.
+
+It defines the location of ring resonances for the RingCube plotting.
+"""
 import pandas as pd
 import pkg_resources as pr
 
