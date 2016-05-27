@@ -35,6 +35,7 @@ class MetaData(object):
     """
 
     def __init__(self, img_id):
+        self.img_id = img_id
         urlname = "S_IMG_CO_ISS_{}_{}.json".format(img_id[1:], img_id[0])
         fullurl = metadata_url + urlname
         print("Requesting", fullurl)
@@ -79,6 +80,18 @@ class MetaData(object):
     def surface(self):
         """dict: Saturn surface geometry metadata dictionary"""
         return self.r['Saturn Surface Geometry']
+
+    @property
+    def target_name(self):
+        """str: Intended target name for the current ISS observation"""
+        return self.mission['cassini_target_name']
+
+
+def get_dataframe_from_meta_dic(meta, attr_name):
+    d = getattr(meta, attr_name)
+    df = pd.DataFrame({k: [v] for (k, v) in d.items()})
+    df.index = [meta.img_id]
+    return df
 
 
 class OPUSImageURL(object):
@@ -141,6 +154,9 @@ class OPUSObsID(object):
     @property
     def full_img_url(self):
         return self.get_img_url('full')
+
+    def get_meta_data(self):
+        return MetaData(self.img_id)
 
     def __repr__(self):
         s = "Raw:\n{}\nCalibrated:\n{}".format(self.raw, self.calib)
@@ -225,13 +241,15 @@ class OPUS(object):
                        timesec1=t1, timesec2=t2)
         return myquery
 
-    def get_between_times(self, t1, t2):
+    def get_between_times(self, t1, t2, target=None):
         try:
             t1 = t1.isoformat()
             t2 = t2.isoformat()
         except AttributeError:
             pass
         myquery = self.get_time_query(t1, t2)
+        if target is not None:
+            myquery['target'] = target
         self.create_files_request(myquery, fmt='json')
         self.unpack_json_response()
 
@@ -255,7 +273,7 @@ class OPUS(object):
                               "left; border: 1px solid black;' "
                               "src='{1}' />"
                               .format(width, s) for s in img_urls])
-        return HTML(imagesList)
+        display(HTML(imagesList))
 
     def download_results(self, savedir=None):
         """Download the previously found and stored Opus obsids.
