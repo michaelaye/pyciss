@@ -18,6 +18,7 @@ Contents:
    :maxdepth: 2
 
    tutorial
+   source/modules
 
 Indices and tables
 ==================
