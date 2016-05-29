@@ -16,6 +16,11 @@ try:
     _SEABORN_INSTALLED = True
 except ImportError:
     _SEABORN_INSTALLED = False
+else:
+    sns.set_context('notebook')
+    sns.set_style('white')
+
+
 def calc_4_3(width):
     "Calculate 4:3 ration for figures so that they import nicely in prezzies."
     return (width, 3*width/4)
@@ -58,11 +63,21 @@ class RingCube(CubeFile):
 
     @property
     def minrad(self):
+        "float: MinimumRingRadius in Mm."
         return self.mapping_label['MinimumRingRadius']/1e6
 
     @property
+    def minrad_km(self):
+        return self.minrad * 1000
+
+    @property
     def maxrad(self):
+        "float: MaxiumRingRadius in Mm."
         return self.mapping_label['MaximumRingRadius']/1e6
+
+    @property
+    def maxrad_km(self):
+        return self.maxrad * 1000
 
     @property
     def minlon(self):
@@ -97,8 +112,8 @@ class RingCube(CubeFile):
     def plotfname(self):
         return self.filename.split('.')[0] + '.png'
 
-    def imshow(self, data=None, plow=1, phigh=99, save=False, ax=None,
-               interpolation='sinc', extra_title=None,
+    def imshow(self, data=None, plow=1, phigh=99, save=False, ax=None, fig=None,
+               interpolation='sinc', extra_title=None, show_resonances=True,
                set_extent=True, **kwargs):
         if data is None:
             data = self.img
@@ -117,15 +132,16 @@ class RingCube(CubeFile):
         ax.set_ylabel('Radius [Mm]')
         ax.ticklabel_format(useOffset=False)
         # ax.grid('on')
-        title = "{}, Label_Res: {} m/pix, Metadata_Res: {} m/pix, {}".format(
+        title = "{}, Metadata_Res: {} m/pix, {}, {}".format(
                         self.plottitle,
-                        int(self.resolution_val),
                         self.meta_pixres,
+                        self.imagetime.date().isoformat(),
                         self.meta_litstatus)
         if extra_title:
             title += ', ' + extra_title
         ax.set_title(title, fontsize=14)
-        self.set_resonance_axis(ax)
+        if show_resonances:
+            self.set_resonance_axis(ax, show_resonances)
         fig.tight_layout()
         if save:
             savename = self.plotfname
@@ -133,13 +149,19 @@ class RingCube(CubeFile):
                 savename = savename[:-4] + '_' + extra_title + '.png'
             fig.savefig(savename, dpi=150)
 
-    def set_resonance_axis(self, ax):
-        filter1 = (resonances['radius'] > (self.minrad*1000))
-        filter2 = (resonances['radius'] < (self.maxrad*1000))
-        newticks = resonances[filter1 & filter2]
+    def set_resonance_axis(self, ax, show_resonances):
+        filter1 = (resonances['radius'] > (self.minrad_km))
+        filter2 = (resonances['radius'] < (self.maxrad_km))
+        try:
+            filter3 = (resonances.moon.isin(show_resonances))
+        except TypeError:
+            # if show_resonances not a list, do nothing:
+            filter3 = True
+        newticks = resonances[filter1 & filter2 & filter3]
         ax2 = ax.twinx()
         ax2.set_ybound(self.minrad, self.maxrad)
         ax2.ticklabel_format(useOffset=False)
+        # i plot in Mm, hence the division by 1000 here.
         ax2.set_yticks(newticks.radius/1000)
         ax2.set_yticklabels(newticks.name)
         return ax2

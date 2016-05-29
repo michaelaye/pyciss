@@ -57,9 +57,11 @@ jan_epi_resonances.columns = ['moon', 'reson', 'radius']
 # calculate order from resonance name
 jan_epi_resonances['order'] = jan_epi_resonances.reson.map(get_janos_epi_order)
 
-# remove space from resonance string
-f = lambda x: ':'.join(i.strip() for i in x.split(':'))
-jan_epi_resonances.reson = jan_epi_resonances.reson.map(f)
+
+def func(x):
+    "Remove space from resonce string"
+    return ':'.join(i.strip() for i in x.split(':'))
+jan_epi_resonances.reson = jan_epi_resonances.reson.map(func)
 
 # calculate name for axes display
 jan_epi_resonances['name'] = jan_epi_resonances.moon + ' ' +\
@@ -72,3 +74,4 @@ prime_jan_epis = prime_jan_epis.drop(to_drop, axis=1)
 
 all_resonances = pd.concat([prime_resonances, prime_jan_epis])
 all_resonances.sort_values(by='radius', inplace=True)
+all_resonances['moon'] = all_resonances.name.map(lambda x: x.split()[0].lower())
