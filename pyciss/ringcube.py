@@ -16,6 +16,9 @@ try:
     _SEABORN_INSTALLED = True
 except ImportError:
     _SEABORN_INSTALLED = False
+def calc_4_3(width):
+    "Calculate 4:3 ration for figures so that they import nicely in prezzies."
+    return (width, 3*width/4)
 
 
 class RingCube(CubeFile):

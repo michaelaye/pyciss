@@ -134,7 +134,3 @@ def is_lossy(label):
         return True
     else:
         return False
-
-
-def calc_4_3(width):
-    return (width, 3*width/4)
