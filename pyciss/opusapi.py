@@ -134,6 +134,18 @@ class OPUSObsID(object):
         return "{}_{}.jpg".format(base, size)
 
     @property
+    def raw_urls(self):
+        return [self.raw.image_url, self.raw.label_url]
+
+    @property
+    def calib_urls(self):
+        return [self.calib.image_url, self.calib.label_url]
+
+    @property
+    def all_urls(self):
+        return self.raw_urls + self.calib_urls
+
+    @property
     def img_id(self):
         """Convert OPUS ObsID into the more known image_id."""
         tokens = self.idname.split('_')
