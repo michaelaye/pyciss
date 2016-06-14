@@ -63,6 +63,17 @@ class PathManager(object):
     img_id : {str, pathlib.Path)
         The N... or W... image identifier string of CISS images or the absolute
         path to an existing image
+
+    Attributes
+    ----------
+    basepath
+    img_id
+    calib_img
+    calib_label
+    raw_image
+    raw_cub
+    raw_label
+    cube_path
     """
 
     def __init__(self, img_id, savedir=None):
@@ -92,25 +103,33 @@ class PathManager(object):
             print("No file found.")
             return None
 
+    def glob_for_pattern(self, pattern):
+        return self.check_and_return(self._basepath.glob(self._id + pattern))
+
     @property
     def calib_img(self):
-        return self.check_and_return((self._basepath).glob(self._id + "*_CALIB.IMG"))
+        return self.glob_for_pattern("*_CALIB.IMG")
 
     @property
     def calib_label(self):
-        return self.check_and_return((self._basepath).glob(self._id + "*_CALIB.LBL"))
+        return self.glob_for_pattern("*_CALIB.LBL")
 
     @property
     def raw_image(self):
-        return self.check_and_return((self._basepath).glob(self._id + "*_?.IMG"))
+        return self.glob_for_pattern("*_?.IMG")
 
     @property
     def raw_cub(self):
-        return self.check_and_return((self._basepath).glob(self._id + "*_?.cub"))
+        return self.glob_for_pattern("*_?.cub")
 
     @property
     def cal_cub(self):
-        return self.check_and_return((self._basepath).glob(self._id + "*_?.cal.cub"))
+        return self.glob_for_pattern("*_?.cal.cub")
+
+    @property
+    def dst_cub(self):
+        "pathlib.Path : Path to destriped calibrated unprojected product."
+        return self.glob_for_pattern("*_?.cal.dst.cub")
 
     @property
     def raw_label(self):
