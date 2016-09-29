@@ -1,29 +1,32 @@
+""" Note that the calibration starts from the LBL files, not the IMG !!! """
 from __future__ import division, print_function
-from pysis.isis import ciss2isis, cisscal, spiceinit, ringscam2map, getkey,\
-    editlab, dstripe, isis2std
-from pysis.util import file_variations
-from pysis import IsisPool
-import gdal
-import numpy as np
-from os.path import join as pjoin
+
 import os
-from pyciss import plotting
-from pyciss.io import dataroot
+from os.path import join as pjoin
+
+import numpy as np
+from pathlib import Path
+from pysis import IsisPool
+from pysis.isis import (ciss2isis, cisscal, dstripe, editlab, getkey, isis2std,
+                        ringscam2map, spiceinit)
+from pysis.util import file_variations
+
 from . import io
 
-
-ISISDATA = os.environ['ISIS3DATA']
+ISISDATA = Path(os.environ['ISIS3DATA'])
 
 
 def calibrate_ciss(img_name, name_only=False):
+
+    img_name = str(img_name)
     (cub_name,
      cal_name,
      dst_name,
      map_name) = file_variations(img_name,
                                  ['.cub',
                                   '.cal.cub',
-                                  '.dst.cal.cub',
-                                  '.map.dst.cal.cub'])
+                                  '.cal.dst.cub',
+                                  '.cal.dst.map.cub'])
     if name_only:
         return map_name
     ciss2isis(from_=img_name, to=cub_name)
@@ -44,8 +47,7 @@ def calibrate_ciss(img_name, name_only=False):
     cisscal(from_=cub_name, to=cal_name)
     dstripe(from_=cal_name, to=dst_name, mode='horizontal')
     ringscam2map(from_=dst_name, to=map_name, defaultrange='Camera',
-                 map=pjoin(ISISDATA,
-                           'base/templates/maps/ringcylindrical.map'))
+                 map=ISISDATA / 'base/templates/maps/ringcylindrical.map')
     isis2std(from_=map_name, to=map_name[:-3]+'tif', format='tiff')
     return map_name
 
@@ -70,20 +72,14 @@ def calibrate_many(images):
     return images
 
 
-def process_image(fname):
-    ds = gdal.Open(fname)
-    data = ds.ReadAsArray()
-    data[data < -2e+38] = np.nan
-    mean_value = np.nanmean(data, axis=1)
+def remove_mean_value(data, axis=1):
+    mean_value = np.nanmean(data, axis=axis)
     subtracted = data - mean_value[:, np.newaxis]
-    fig = plotting.imshowlowhigh(subtracted)
-    savename = pjoin(dataroot, 'pipeline_out')
-    fig.savefig(pjoin(savename, fname+'.png'), dpi=150)
+    return subtracted
 
 
 def pipeline(fname):
     try:
         map_name = calibrate_ciss(fname)
-        process_image(map_name)
     except AttributeError:
         return "Problem with {}".format(fname)

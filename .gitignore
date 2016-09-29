@@ -56,4 +56,6 @@ target/
 *.IMG
 *.LBL
 *.ipynb_checkpoints/
+*.sublime-workspace
 print.prt
+docs/*build*

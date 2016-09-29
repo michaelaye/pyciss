@@ -1,4 +1,16 @@
-from __future__ import print_function, division
+"""This module is making use of the
+`OPUS API <http://pds-rings-tools.seti.org/opus/api/>`_ to create web request
+for OPUS data, metadata, and preview images.
+"""
+from __future__ import division, print_function
+
+import pandas as pd
+import requests
+from IPython.display import HTML, display
+from pathlib import Path
+
+from . import io
+
 try:
     from urllib.request import unquote, urlretrieve
     from urllib.parse import urlparse, urlencode
@@ -6,29 +18,83 @@ except ImportError:
     from urllib2 import unquote
     from urlparse import urlparse
     from urllib import urlretrieve, urlencode
-import requests
-from IPython.display import HTML
-import os.path as path
-from . import io
-from socket import gethostname
+
+base_url = 'http://tools.pds-rings.seti.org/opus/api'
+metadata_url = base_url + '/metadata/'
+image_url = base_url + '/image/'
 
 
-base_url = 'http://pds-rings-tools.seti.org/opus/api'
-details_url = base_url + 'metadata/'
-image_url = base_url + 'image/'
-images_url = base_url + 'images/'
+class MetaData(object):
+    """Receive OPUS Metadata for ISS img_id.
 
-srings_ciss_query = {'target': 'S+RINGS',
-                     'instrumentid': 'Cassini+ISS'}
+    Parameters
+    ----------
+    img_id : str
+        In the form of {'N','W'}0123456789, the image id used in science publications
 
-host = gethostname()
-if host == 'ringsvm':
-    savepath = '/usr/local/ringsdata/opus'
-else:
-    savepath = path.join(io.HOME, 'data', 'ciss', 'opus')
+    """
+
+    def __init__(self, img_id):
+        self.img_id = img_id
+        urlname = "S_IMG_CO_ISS_{}_{}.json".format(img_id[1:], img_id[0])
+        fullurl = metadata_url + urlname
+        print("Requesting", fullurl)
+        self.r = requests.get(fullurl).json()
+
+    @property
+    def image(self):
+        """dict: image constraints dictionary of the metadata"""
+        return self.r['Image Constraints']
+
+    @property
+    def wavelength(self):
+        """dict: wavelength constraints dictionary of the metadata"""
+        return self.r['Wavelength Constraints']
+
+    @property
+    def surface_geom(self):
+        """dict: Cassini surface geometry dictionary of the metadata"""
+        return self.r['Cassini Surface Geometry']
+
+    @property
+    def mission(self):
+        """dict: Mission related metadata dictionary"""
+        return self.r['Cassini Mission Constraints']
+
+    @property
+    def ring_geom(self):
+        """dict: Ring geometry metadata dictionary"""
+        return self.r['Ring Geometry Constraints']
+
+    @property
+    def general(self):
+        """dict: general metadata dictionary"""
+        return self.r['General Constraints']
+
+    @property
+    def iss(self):
+        """dict: ISS instrument related metadata dictionary"""
+        return self.r['Cassini ISS Constraints']
+
+    @property
+    def surface(self):
+        """dict: Saturn surface geometry metadata dictionary"""
+        return self.r['Saturn Surface Geometry']
+
+    @property
+    def target_name(self):
+        """str: Intended target name for the current ISS observation"""
+        return self.mission['cassini_target_name']
 
 
-class OPUSImage(object):
+def get_dataframe_from_meta_dic(meta, attr_name):
+    d = getattr(meta, attr_name)
+    df = pd.DataFrame({k: [v] for (k, v) in d.items()})
+    df.index = [meta.img_id]
+    return df
+
+
+class OPUSImageURL(object):
 
     """Manage URLS from the OPUS response."""
 
@@ -55,15 +121,23 @@ class OPUSObsID(object):
 
     def __init__(self, obsid_data):
         self.idname = obsid_data[0]
-        self.raw = OPUSImage(obsid_data[1]['RAW_IMAGE'])
+        self.raw = OPUSImageURL(obsid_data[1]['RAW_IMAGE'])
+        # the images have an iteration number. I'm fishing it out here:
+        self.number = self.raw.image_url.split('_')[-1][0]
         try:
-            self.calib = OPUSImage(obsid_data[1]['CALIBRATED'])
+            self.calib = OPUSImageURL(obsid_data[1]['CALIBRATED'])
         except KeyError:
             self.calib = None
 
     def get_img_url(self, size):
         base = self.raw.label_url[:-4].replace('volumes', 'browse')
         return "{}_{}.jpg".format(base, size)
+
+    @property
+    def img_id(self):
+        """Convert OPUS ObsID into the more known image_id."""
+        tokens = self.idname.split('_')
+        return ''.join(tokens[-2:][::-1])
 
     @property
     def small_img_url(self):
@@ -81,6 +155,9 @@ class OPUSObsID(object):
     def full_img_url(self):
         return self.get_img_url('full')
 
+    def get_meta_data(self):
+        return MetaData(self.img_id)
+
     def __repr__(self):
         s = "Raw:\n{}\nCalibrated:\n{}".format(self.raw, self.calib)
         return s
@@ -88,40 +165,33 @@ class OPUSObsID(object):
 
 class OPUS(object):
 
-    """Manage OPUS API requests."""
+    """Manage OPUS API requests.
 
-    def get_filename(self, fname):
-        """Receive CISS image via it's filename.
 
-        This example receives an image of Titan:
+    """
 
-        >>> opus = io.Opus()
-        >>> opus.get_filename('N1695760475_1')
+    def query_image_id(self, image_id):
+        """Query OPUS via the image_id.
+
+        This is a query using the 'primaryfilespec' field of the OPUS database.
+        It returns a list of URLS into the `obsids` attribute.
+
+        This example queries for an image of Titan:
+
+        >>> opus = opusapi.OPUS()
+        >>> opus.query_image_id('N1695760475_1')
+
+        After this, one can call `download_results()` to retrieve the found
+        data into the standard locations into the database_path as defined in
+        config.ini.
         """
-        myquery = {'primaryfilespec': fname}
+        myquery = {'primaryfilespec': image_id}
         self.create_files_request(myquery, fmt='json')
         self.unpack_json_response()
         return self.obsids
 
-    def get_image(self, obsid, size='med', return_url=False):
-        """size can be thumb,small,med,full """
-        r = requests.get("{image_url}{size}/{obsid}.html"
-                         .format(image_url=self.image_url,
-                                 size=size,
-                                 obsid=obsid))
-        if return_url:
-            return r.url
-        else:
-            return HTML(r.text)
-
-    def get_details(self, obsid, fmt='html', get_response=False):
-        r = requests.get(self.details_url + obsid + '.' + fmt)
-        if get_response:
-            return r
-        elif fmt == 'html':
-            return HTML(r.text)
-        elif fmt == 'json':
-            return r.json()
+    def get_metadata(self, obsid, fmt='html', get_response=False):
+        return MetaData(obsid.img_id)
 
     def create_request_with_query(self, kind, query, size='thumb', fmt='json'):
         """api/data.[fmt], api/images/[size].[fmt] api/files.[fmt]
@@ -149,6 +219,10 @@ class OPUS(object):
     #     self.create_request_with_query('data', myquery, fmt=fmt)
 
     def unpack_json_response(self):
+        if self.r.status_code == 500:
+            print("No data found.")
+            self.obsids = []
+            return
         response = self.r.json()['data']
         obsids = []
         for obsid_data in response.items():
@@ -156,11 +230,28 @@ class OPUS(object):
         self.obsids = obsids
         print('Found {} obsids.'.format(len(obsids)))
 
-    def get_radial_res_query(self, res1='', res2=0.5):
-        myquery = srings_ciss_query.copy()
-        myquery['projectedradialresolution1'] = res1
-        myquery['projectedradialresolution2'] = res2
+    def get_radial_res_query(self, res1, res2):
+        myquery = dict(target='S+RINGS', instrumentid='Cassini+ISS',
+                       projectedradialresolution1=res1,
+                       projectedradialresolution2=res2)
         return myquery
+
+    def get_time_query(self, t1, t2):
+        myquery = dict(instrumentid='Cassini+ISS',
+                       timesec1=t1, timesec2=t2)
+        return myquery
+
+    def get_between_times(self, t1, t2, target=None):
+        try:
+            t1 = t1.isoformat()
+            t2 = t2.isoformat()
+        except AttributeError:
+            pass
+        myquery = self.get_time_query(t1, t2)
+        if target is not None:
+            myquery['target'] = target
+        self.create_files_request(myquery, fmt='json')
+        self.unpack_json_response()
 
     def get_between_resolutions(self, res1='', res2='0.5'):
         myquery = self.get_radial_res_query(res1, res2)
@@ -168,32 +259,51 @@ class OPUS(object):
         self.unpack_json_response()
 
     def show_images(self, size='small'):
-        if size == 'small':
-            width = 256
-        elif size == 'med':
-            width = 512
-        elif size == 'thumb':
-            width = 100
-        elif size == 'full':
-            width = 1024
+        """Shows preview images using the Jupyter notebook HTML display.
+
+        Parameters
+        ==========
+        size : {'small', 'med', 'thumb', 'full'}
+            Determines the size of the preview image to be shown.
+        """
+        d = dict(small=256, med=512, thumb=100, full=1024)
+        width = d[size]
         img_urls = [i.get_img_url(size) for i in self.obsids]
         imagesList = ''.join(["<img style='width: {0}px; margin: 0px; float: "
                               "left; border: 1px solid black;' "
                               "src='{1}' />"
                               .format(width, s) for s in img_urls])
-        return HTML(imagesList)
+        display(HTML(imagesList))
 
-    def download_results(self, targetfolder=None):
-        if targetfolder is not None:
-            currentsavepath = path.join(savepath, targetfolder)
+    def download_results(self, savedir=None):
+        """Download the previously found and stored Opus obsids.
+
+        Parameters
+        ==========
+        savedir: str or pathlib.Path, optional
+            If the database root folder as defined by the config.ini should not be used,
+            provide a different savedir here. It will be handed to PathManager.
+        """
         for obsid in self.obsids:
+            pm = io.PathManager(obsid.img_id, savedir=savedir)
+            pm.basepath.mkdir(exist_ok=True)
             for url in [obsid.raw.image_url, obsid.raw.label_url]:
-                basename = path.basename(url)
+                basename = Path(url).name
                 print("Downloading", basename)
-                urlretrieve(url, path.join(currentsavepath, basename))
+                urlretrieve(url, str(pm.basepath / basename))
 
-    def download_previews(self):
+    def download_previews(self, savedir=None):
+        """Download preview files for the previously found and stored Opus obsids.
+
+        Parameters
+        ==========
+        savedir: str or pathlib.Path, optional
+            If the database root folder as defined by the config.ini should not be used,
+            provide a different savedir here. It will be handed to PathManager.
+        """
         for obsid in self.obsids:
-            basename = path.basename(obsid.medium_img_url)
+            pm = io.PathManager(obsid.img_id, savedir=savedir)
+            pm.basepath.mkdir(exist_ok=True)
+            basename = Path(obsid.medium_img_url).name
             print("Downloading", basename)
-            urlretrieve(obsid.medium_img_url, path.join(savepath, basename))
+            urlretrieve(obsid.medium_img_url, str(pm.basepath / basename))

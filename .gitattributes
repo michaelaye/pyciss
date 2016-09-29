@@ -1,0 +1,2 @@
+
+*.ipynb filter=nbstripoutpyciss/_version.py export-subst
