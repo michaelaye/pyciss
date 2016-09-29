@@ -43,7 +43,7 @@ def calibrate_ciss(img_name, name_only=False):
               shape='ringplane')
     cisscal(from_=cub_name, to=cal_name)
     dstripe(from_=cal_name, to=dst_name, mode='horizontal')
-    ringscam2map(from_=dst_name, to=map_name,
+    ringscam2map(from_=dst_name, to=map_name, defaultrange='Camera',
                  map=pjoin(ISISDATA,
                            'base/templates/maps/ringcylindrical.map'))
     isis2std(from_=map_name, to=map_name[:-3]+'tif', format='tiff')
