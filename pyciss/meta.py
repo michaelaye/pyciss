@@ -18,7 +18,7 @@ def get_meta_df():
     with pr.resource_stream('pyciss', 'data/metadata.txt') as f:
         meta_df = read_metadata(f)
     return meta_df
-    
+
 
 # resonances
 def get_order(name):
@@ -39,7 +39,7 @@ def get_resonances():
 def get_prime_resonances():
     resonances = get_resonances()
     prime_resonances = resonances[resonances.order == 1].drop('order', axis=1)
-    # filter out Janus and Epimetheus
+    # filter out Janus and Epimetheus as we have a more precise file for that.
     prime_resonances = prime_resonances.loc[~prime_resonances.name.str.startswith('Janus')]
     prime_resonances = prime_resonances.loc[~prime_resonances.name.str.startswith('Epimetheus')]
     return prime_resonances
@@ -59,7 +59,7 @@ def get_janus_epimetheus_resonances():
                                  'data/ring_janus_epimetheus_resonances.txt')
     with open(fname) as f:
         jan_epi_resonances = pd.read_fwf(f, skiprows=15, header=0, widths=w,
-                                         skip_footer=1)
+                                         skipfooter=1)
 
     # replace column names
     jan_epi_resonances.columns = ['moon', 'reson', 'radius']
@@ -83,6 +83,7 @@ def get_prime_jan_epi():
     prime_jan_epis = jan_epi_resonances[jan_epi_resonances.order == 1]
     to_drop = ['order', 'moon', 'reson']
     prime_jan_epis = prime_jan_epis.drop(to_drop, axis=1)
+    return prime_jan_epis
 
 def get_all_resonances():
     prime_resonances = get_prime_resonances()

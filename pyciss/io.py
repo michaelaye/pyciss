@@ -10,23 +10,16 @@ except ImportError:
     print("Cannot import ISIS system.")
 
 
-configpath = pr.resource_filename('pyciss', 'config.ini')
-config = cp.ConfigParser()
-config.read(configpath)
-# just take first node as host name:
-hostname = gethostname().split('.')[0]
-section = hostname if hostname in config else 'DEFAULT'
-dataroot = Path(config[section]['database_path'])
-
-dbroot = dataroot / 'db'
-dbroot.mkdir(exist_ok=True)
-
-
 def set_database_path(dbfolder, _append=False, _testhostname=None):
     """Use to write the database path into the config.
 
     Using the socket module to determine the host/node name and
     creating a new section in the config file.
+
+    Parameters
+    ----------
+    dbfolder : str or pathlib.Path
+        Path to where pyciss will store the ISS images it downloads and receives.
     """
     config = cp.ConfigParser()
     config['DEFAULT'] = {}
@@ -50,6 +43,18 @@ def db_mapped_cubes():
 def db_label_paths():
     return dbroot.glob("*.LBL")
 
+def get_db_root():
+    configpath = pr.resource_filename('pyciss', 'config.ini')
+    config = cp.ConfigParser()
+    config.read(configpath)
+    # just take first node as host name:
+    hostname = gethostname().split('.')[0]
+    section = hostname if hostname in config else 'DEFAULT'
+    dataroot = Path(config[section]['database_path'])
+
+    dbroot = dataroot / 'pyciss_db'
+    dbroot.mkdir(exist_ok=True)
+    return dbroot
 
 class PathManager(object):
 
@@ -58,11 +63,17 @@ class PathManager(object):
     The `config.ini` file determines the path to the database for ISS images.
     With this class you can access the different kind of files conveniently.
 
+    NOTE: This class will read the config.ini to define the pyciss_db path, but
+    one can also call it with the savedir argument to override that.
+
     Parameters
     ----------
-    img_id : {str, pathlib.Path)
+    img_id : str or pathlib.Path
         The N... or W... image identifier string of CISS images or the absolute
         path to an existing image
+    savedir : str or pathlib.Path
+        Path to the pyciss image database. By default defined by what's found in
+        config.ini, but can be overridden using this parameter.
 
     Attributes
     ----------
@@ -83,9 +94,11 @@ class PathManager(object):
         else:
             self._id = img_id
         if savedir is not None:
-            self._basepath = Path(savedir) / self._id
+            self._dbroot = Path(savedir)
         else:
-            self._basepath = dbroot / self._id
+            self._dbroot = get_db_root()
+
+        self._basepath = self._dbroot / self._id
 
     @property
     def basepath(self):

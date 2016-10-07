@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 # setup
 from pyciss import io, ringcube
@@ -15,7 +15,7 @@ opus.query_image_id(img_id)
 opus.download_results(savedir = tmpdir.name)
 
 
-# In[2]:
+# In[ ]:
 
 # test_PathManager
 pathmanager = io.PathManager(img_id, savedir=tmpdir.name)
