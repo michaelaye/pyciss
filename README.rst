@@ -73,3 +73,5 @@ Acknowledgements
  * Sremčević, M., Stewart, G.R., Albers, N., Colwell, J.E., Esposito, L.W., 2008. Density Waves in Saturn's Rings: Non-linear Dispersion and Moon Libration Effects. American Astronomical Society 40, 24.03–.
 
 * Morgan Rehnberg for providing me with Miodrag's data file and answering some of my newbie questions.
+
+* John Cutler and Matt Funk for improving the software

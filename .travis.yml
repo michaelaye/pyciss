@@ -1,32 +1,28 @@
-sudo: false
 language: python
-
-cache: pip
-
 branches:
   except:
     - gh-pages
-
 python:
   - "3.5"
-
-before_install:
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+install:
+  - sudo apt-get update
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION --file requirements.txt
-  - conda install --yes pytest
+  - conda info -a
+  # now my stuff
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION --file requirements.txt
+  - source activate test-environment
+  - conda install pytest
   # - pip install codecov
   # - pip install pytest-cov
   - pip install coveralls
-  - pip install versioneer
-  - pip install https://github.com/wtolson/pysis/archive/0.6.0.zip
+  - pip install pysis
   - pip install pytest-ipynb
-  - pip install --pre .
+  - python setup.py install
 
 # command to run tests, e.g. python setup.py test
 script:

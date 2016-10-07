@@ -66,11 +66,8 @@ def calibrate_ciss(img_name, ringdata=True, map_project=False):
 
     cisscal(from_=cub_name, to=cal_name)
     dstripe(from_=cal_name, to=dst_name, mode='horizontal')
-    if map_project:
-        ringscam2map(from_=dst_name, to=map_name,
-                     map=ISISDATA / 'base/templates/maps/ringcylindrical.map')
-    else:
-        map_name = dst_name
+    ringscam2map(from_=dst_name, to=map_name, defaultrange='Camera',
+                 map=ISISDATA / 'base/templates/maps/ringcylindrical.map')
     isis2std(from_=map_name, to=map_name[:-3]+'tif', format='tiff')
     return map_name
 
