@@ -40,6 +40,11 @@ Homepage
 
 https://github.com/michaelaye/pyciss
 
+Examples
+--------
+
+See notebooks in :code:pyciss/tests/ for usage examples.
+
 Installation
 ------------
 
