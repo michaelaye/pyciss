@@ -1,6 +1,6 @@
 from socket import gethostname
 
-import configparser as cp
+import yaml
 from pathlib import Path
 import pkg_resources as pr
 
@@ -9,8 +9,18 @@ try:
 except ImportError:
     print("Cannot import ISIS system.")
 
+configpath = Path.home() / '.pyciss.yaml'
 
-def set_database_path(dbfolder, _append=False, _testhostname=None):
+
+def get_config():
+    if not configpath.exists():
+        raise IOError("Config file .pyciss.yaml not found.")
+    else:
+        with open(configpath) as f:
+            return yaml.load(f)
+
+
+def set_database_path(dbfolder):
     """Use to write the database path into the config.
 
     Using the socket module to determine the host/node name and
@@ -21,19 +31,14 @@ def set_database_path(dbfolder, _append=False, _testhostname=None):
     dbfolder : str or pathlib.Path
         Path to where pyciss will store the ISS images it downloads and receives.
     """
-    config = cp.ConfigParser()
-    config['DEFAULT'] = {}
-    if _testhostname is not None:
-        hostname = _testhostname
-    else:
-        hostname = gethostname().split('.')[0]
-    config[hostname] = {}
-    config[hostname]['database_path'] = dbfolder
-    mode = 'a' if _append else 'w'
-    with open(configpath, mode) as fp:
-        config.write(fp)
+    try:
+        d = get_config()
+    except IOError:
+        d = {}
+    d['pyciss_db_path'] = dbfolder
+    with configpath.open('w') as f:
+        yaml.dump(d, f, default_flow_style=False)
     print("Saved database path into {}.".format(configpath))
-    print("Please restart your Python to activate the new path settings.")
 
 
 def db_mapped_cubes():
@@ -43,27 +48,23 @@ def db_mapped_cubes():
 def db_label_paths():
     return dbroot.glob("*.LBL")
 
-def get_db_root():
-    configpath = pr.resource_filename('pyciss', 'config.ini')
-    config = cp.ConfigParser()
-    config.read(configpath)
-    # just take first node as host name:
-    hostname = gethostname().split('.')[0]
-    section = hostname if hostname in config else 'DEFAULT'
-    dataroot = Path(config[section]['database_path'])
 
-    dbroot = dataroot / 'pyciss_db'
+def get_db_root():
+    with configpath.open() as f:
+        d = yaml.load(f)
+    dbroot = Path(d['pyciss_db_path'])
     dbroot.mkdir(exist_ok=True)
     return dbroot
+
 
 class PathManager(object):
 
     """Manage paths to data in database.
 
-    The `config.ini` file determines the path to the database for ISS images.
+    The `.pyciss.yaml` config file determines the path to the database for ISS images.
     With this class you can access the different kind of files conveniently.
 
-    NOTE: This class will read the config.ini to define the pyciss_db path, but
+    NOTE: This class will read the .pyciss.yaml to define the pyciss_db path, but
     one can also call it with the savedir argument to override that.
 
     Parameters
@@ -73,7 +74,7 @@ class PathManager(object):
         path to an existing image
     savedir : str or pathlib.Path
         Path to the pyciss image database. By default defined by what's found in
-        config.ini, but can be overridden using this parameter.
+        the .pyciss.yaml config, but can be overridden using this parameter.
 
     Attributes
     ----------
@@ -92,7 +93,8 @@ class PathManager(object):
         if Path(img_id).is_absolute():
             self._id = Path(img_id).name.split('_')[0]
         else:
-            self._id = img_id
+            # I'm using only filename until _ for storage
+            self._id = img_id[:11]
         if savedir is not None:
             self._dbroot = Path(savedir)
         else:
@@ -117,7 +119,7 @@ class PathManager(object):
             return None
 
     def glob_for_pattern(self, pattern):
-        return self.check_and_return(self._basepath.glob(self._id + pattern))
+        return self.check_and_return(self.basepath.glob(self._id + pattern))
 
     @property
     def calib_img(self):

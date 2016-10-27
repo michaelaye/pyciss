@@ -3,6 +3,11 @@ import pvl
 import pandas as pd
 from pathlib import Path
 import progressbar
+from planetpy import utils
+from urllib.request import urlretrieve
+
+# The '2' stands for all data at Saturn, '1' would be all transit data.
+base_url = "http://pds-rings.seti.org/volumes/COISS_2xxx/COISS_"
 
 
 class PVLColumn(object):
@@ -69,7 +74,8 @@ class PVLColumn(object):
         return self.pvlobj.__repr__()
 
 
-class Label(object):
+class TableLabel(object):
+    tablename = 'TABLE'
     """Support working with the labelfile of ISS indices."""
     def __init__(self, labelpath):
         self._path = Path(labelpath)
@@ -88,11 +94,15 @@ class Label(object):
 
     @property
     def table(self):
-        return self.lbl['IMAGE_INDEX_TABLE']
+        return self.lbl[self.tablename]
 
     @property
     def pvl_columns(self):
         return self.table.getlist('COLUMN')
+
+    @property
+    def columns_dic(self):
+        return {col['NAME']:col for col in self.pvl_columns}
 
     @property
     def colnames(self):
@@ -119,8 +129,52 @@ class Label(object):
         return colspecs
 
 
-def iss_index_to_df(indexpath, labelpath=None):
+class ImageTableLabel(TableLabel):
+    tablename = 'IMAGE_INDEX_TABLE'
+
+class RDRIndexLabel(TableLabel):
+    tablename = 'RDR_INDEX_TABLE'
+
+class RingGeoTableLabel(TableLabel):
+    tablename = 'RING_GEOMETRY_TABLE'
+
+
+def decode_line(linedata, labelpath):
+    """Decode one line of tabbed data with the appropriate label file.
+
+    Parameters
+    ----------
+    linedata : str
+        One line of a .tab data file
+    labelpath : str or pathlib.Path
+        Path to the appropriate label that describes the data.
+    """
+    label = ImageTableLabel(labelpath)
+    for column in label.pvl_columns:
+        pvlcol = PVLColumn(column)
+        print(pvlcol.name, pvlcol.decode(linedata))
+
+
+def index_to_df(indexpath, label, convert_times):
+    indexpath = Path(indexpath)
+    df = pd.read_fwf(indexpath, header=None,
+                     names=label.colnames,
+                     colspecs=label.colspecs)
+    if convert_times:
+        print("Converting times...")
+        for column in [i for i in df.columns if 'TIME' in i]:
+            df[column] = pd.to_datetime(df[column])
+
+    return df
+
+
+def iss_index_to_df(indexpath, labelpath=None, convert_times=True):
     """Read index.tab file with appropriate label file into dataframe.
+
+    By default the detached label should be in the same folder as the
+    indexfile and will automatically be used.
+    The user can force a special labelpath to be used as second
+    parameter.
 
     Parameters
     ----------
@@ -129,17 +183,31 @@ def iss_index_to_df(indexpath, labelpath=None):
     labelpath : str or pathlib.Path
         Path to labelfile that desribes content to indexfiles.
     """
-    if labelpath is None:
+    indexpath = Path(indexpath)
+    if labelpath is not None:
+        # if extra labelpath given.
+        labelpath = Path(labelpath)
+    else:
+        # create path from index table path
+        labelpath = indexpath.with_suffix('.lbl')
+    if not labelpath.exists():
         df = pd.read_csv(indexpath, header=None)
     else:
-        label = Label(labelpath)
+        label = ImageTableLabel(labelpath)
         df = pd.read_fwf(indexpath, header=None,
                          names=label.colnames,
                          colspecs=label.colspecs)
+    if convert_times:
+        print("Converting times...")
+        for column in [i for i in df.columns if 'TIME' in i]:
+            df[column] = pd.to_datetime(df[column].
+                                                map(utils.
+                                                    nasa_datetime_to_iso))
+
     return df
 
 
-def convert_indexfiles_to_hdf(folder, labelpath):
+def convert_indexfiles_to_hdf(folder):
     """Convert all indexfiles to an HDF database.
 
     Search for .tab files in `folder`, read them into a dataframe,
@@ -156,12 +224,44 @@ def convert_indexfiles_to_hdf(folder, labelpath):
     bucket = []
     bar = progressbar.ProgressBar(max_value=len(indexfiles))
     for i, indexfile in enumerate(indexfiles):
-        bucket.append(iss_index_to_df(indexfile, labelpath))
+        # convert times later, more performant
+        df = iss_index_to_df(indexfile, convert_times=False)
+        df['index_fname'] = str(indexfile)
+        bucket.append(df)
         bar.update(i)
     totalindex = pd.concat(bucket, ignore_index=True)
     # Converting timestrings to datetimes
+    print("Converting times...")
     for column in [i for i in totalindex.columns if 'TIME' in i]:
-        totalindex[column] = pd.to_datetime(totalindex[column].map(utils.nasa_datetime_to_iso))
+        totalindex[column] = pd.to_datetime(totalindex[column].
+                                            map(utils.
+                                                nasa_datetime_to_iso))
     savepath = indexdir / 'iss_totalindex.hdf'
     totalindex.to_hdf(savepath, 'df')
-    print("Created pandas HDF index database file here:\n{}".format(savepath))
+    print("Created pandas HDF index database file here:\n{}"
+          .format(savepath))
+
+
+class IndexDB(object):
+    def __init__(self, indexdir="/Volumes/Data/ciss/indexfiles"):
+        self.indexdir = Path(indexdir)
+
+    @property
+    def indexfiles(self):
+        return self.indexdir.glob('*_????.tab')
+
+    @property
+    def cumulative_label(self):
+        return ImageTableLabel(self.indexdir / 'cumindex.lbl')
+
+    def get_cumulative(self):
+        savepath = self.indexdir / 'cumindex.tab.hdf'
+        if savepath.exists():
+            return pd.read_hdf(savepath, 'df')
+        else:
+            df = iss_index_to_df(self.indexdir / 'cumindex.tab')
+            df.to_hdf(savepath, 'df')
+            return df
+
+    def get_index_no(self, no):
+        return iss_index_to_df(next(self.indexdir.glob('*_'+str(no)+'.tab')))

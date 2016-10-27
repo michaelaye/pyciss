@@ -182,6 +182,9 @@ class OPUS(object):
 
     """
 
+    def __init__(self, silent=False):
+        self.silent = silent
+
     def query_image_id(self, image_id):
         """Query OPUS via the image_id.
 
@@ -195,7 +198,7 @@ class OPUS(object):
 
         After this, one can call `download_results()` to retrieve the found
         data into the standard locations into the database_path as defined in
-        config.ini.
+        `.pyciss.yaml` (the config file),
         """
         myquery = {'primaryfilespec': image_id}
         self.create_files_request(myquery, fmt='json')
@@ -232,7 +235,8 @@ class OPUS(object):
 
     def unpack_json_response(self):
         if self.r.status_code == 500:
-            print("No data found.")
+            if not self.silent:
+                print("No data found.")
             self.obsids = []
             return
         response = self.r.json()['data']
@@ -240,12 +244,17 @@ class OPUS(object):
         for obsid_data in response.items():
             obsids.append(OPUSObsID(obsid_data))
         self.obsids = obsids
-        print('Found {} obsids.'.format(len(obsids)))
+        if not self.silent:
+            print('Found {} obsids.'.format(len(obsids)))
+            if len(obsids) == 1000:
+                print("List is 1000 entries long, which is the pre-set limit, hence"
+                      " the real number of results might be longe.")
 
     def get_radial_res_query(self, res1, res2):
         myquery = dict(target='S+RINGS', instrumentid='Cassini+ISS',
                        projectedradialresolution1=res1,
-                       projectedradialresolution2=res2)
+                       projectedradialresolution2=res2,
+                       limit=1000)
         return myquery
 
     def get_time_query(self, t1, t2):
@@ -299,7 +308,11 @@ class OPUS(object):
             Determines the size of the preview image to be shown.
         """
         d = dict(small=256, med=512, thumb=100, full=1024)
-        width = d[size]
+        try:
+            width = d[size]
+        except KeyError:
+            print("Allowed keys:", d.keys())
+            return
         img_urls = [i.get_img_url(size) for i in self.obsids]
         imagesList = ''.join(["<img style='width: {0}px; margin: 0px; float: "
                               "left; border: 1px solid black;' "
@@ -307,7 +320,8 @@ class OPUS(object):
                               .format(width, s) for s in img_urls])
         display(HTML(imagesList))
 
-    def download_results(self, savedir=None, only_raw=True, only_calib=False):
+    def download_results(self, savedir=None, only_raw=True, only_calib=False,
+                         index=None):
         """Download the previously found and stored Opus obsids.
 
         Parameters
@@ -316,7 +330,8 @@ class OPUS(object):
             If the database root folder as defined by the config.ini should not be used,
             provide a different savedir here. It will be handed to PathManager.
         """
-        for obsid in self.obsids:
+        obsids = self.obsids if index is None else [self.obsids[index]]
+        for obsid in obsids:
             pm = io.PathManager(obsid.img_id, savedir=savedir)
             pm.basepath.mkdir(exist_ok=True)
             if only_raw is True:

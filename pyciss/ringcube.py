@@ -6,8 +6,8 @@ import numpy as np
 from pysis import CubeFile
 
 from .io import PathManager
-from .meta import all_resonances as resonances
-from .meta import meta_df
+from .meta import get_all_resonances
+from .meta import get_meta_df
 from .opusapi import MetaData
 
 try:
@@ -20,6 +20,8 @@ else:
     sns.set_context('notebook')
     sns.set_style('white')
 
+resonances = get_all_resonances()
+meta_df = get_meta_df()
 
 def calc_4_3(width):
     "Calculate 4:3 ration for figures so that they import nicely in prezzies."
@@ -119,15 +121,18 @@ class RingCube(CubeFile):
             data = self.img
         extent_val = self.extent if set_extent else None
         min_, max_ = np.percentile(data[~np.isnan(data)], (plow, phigh))
+        self.min_ = min_
+        self.max_ = max_
         if ax is None:
             if not _SEABORN_INSTALLED:
                 fig, ax = plt.subplots(figsize=calc_4_3(9))
             else:
                 sns.set_context('talk')
                 fig, ax = plt.subplots()
-        ax.imshow(data, extent=extent_val, cmap='gray', vmin=min_, vmax=max_,
-                  interpolation=interpolation, origin='lower',
-                  aspect='auto', **kwargs)
+        im = ax.imshow(data, extent=extent_val, cmap='gray', vmin=min_,
+                       vmax=max_, interpolation=interpolation, origin='lower',
+                       aspect='auto', **kwargs)
+        self.mpl_im = im
         ax.set_xlabel('Longitude [deg]')
         ax.set_ylabel('Radius [Mm]')
         ax.ticklabel_format(useOffset=False)
