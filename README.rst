@@ -69,6 +69,8 @@ Continuous Integration
 
 .. image:: https://travis-ci.org/michaelaye/pyciss.svg?branch=master
     :target: https://travis-ci.org/michaelaye/pyciss
+    
+TODO: Let's add the coverage badge here.
 
 Acknowledgements
 ----------------
