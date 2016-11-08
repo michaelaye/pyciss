@@ -1,8 +1,5 @@
-from socket import gethostname
-
 import yaml
 from pathlib import Path
-import pkg_resources as pr
 
 try:
     from pysis.isis import getkey
@@ -42,11 +39,11 @@ def set_database_path(dbfolder):
 
 
 def db_mapped_cubes():
-    return dbroot.glob("**/*cal.dst.map.cub")
+    return get_db_root().glob("**/*cal.dst.map.cub")
 
 
 def db_label_paths():
-    return dbroot.glob("*.LBL")
+    return get_db_root().glob("*.LBL")
 
 
 def get_db_root():
