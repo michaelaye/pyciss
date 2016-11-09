@@ -13,8 +13,17 @@ def get_config():
     if not configpath.exists():
         raise IOError("Config file .pyciss.yaml not found.")
     else:
-        with open(configpath) as f:
+        with configpath.open() as f:
             return yaml.load(f)
+
+if not configpath.exists():
+    print("No configuration file {} found.\n".format(configpath))
+    print("Please run `pyciss.io.set_database_path()` and provide the path where\n"
+          "you want to keep your automatically downloaded images.")
+    print("`pyciss` will store this path in {}, where you can easily change it later."
+          .format(configpath))
+else:
+    config = get_config()
 
 
 def set_database_path(dbfolder):
