@@ -28,7 +28,7 @@ install:
 script:
     # - py.test -s --cov .
     - cd pyciss/tests
-    - py.test -v
+    - py.test -v *.ipynb
 
 after_success:
     - coveralls
