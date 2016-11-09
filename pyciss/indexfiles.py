@@ -254,7 +254,8 @@ class IndexDB(object):
     def cumulative_label(self):
         return ImageTableLabel(self.indexdir / 'cumindex.lbl')
 
-    def get_cumulative(self):
+    def read_cumulative_index(self):
+        "Read in the whole cumulative index and return dataframe."
         savepath = self.indexdir / 'cumindex.tab.hdf'
         if savepath.exists():
             return pd.read_hdf(savepath, 'df')
