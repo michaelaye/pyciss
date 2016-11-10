@@ -17,6 +17,7 @@ from pysis.exceptions import ProcessError
 
 ISISDATA = Path(os.environ['ISIS3DATA'])
 
+
 def calib_to_isis(pm_or_path):
     try:
         img_name = str(pm_or_path.calib_label)
@@ -124,10 +125,3 @@ def remove_mean_value(data, axis=1):
     mean_value = np.nanmean(data, axis=axis)
     subtracted = data - mean_value[:, np.newaxis]
     return subtracted
-
-
-def pipeline(fname):
-    try:
-        map_name = calibrate_ciss(fname)
-    except AttributeError:
-        return "Problem with {}".format(fname)
