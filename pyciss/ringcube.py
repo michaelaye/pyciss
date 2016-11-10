@@ -3,11 +3,11 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from pysis import CubeFile
 
 from .io import PathManager
-from .meta import get_all_resonances
-from .meta import get_meta_df
+from .meta import get_all_resonances, get_meta_df
 from .opusapi import MetaData
 
 try:
@@ -22,6 +22,7 @@ else:
 
 resonances = get_all_resonances()
 meta_df = get_meta_df()
+
 
 def calc_4_3(width):
     "Calculate 4:3 ration for figures so that they import nicely in prezzies."
