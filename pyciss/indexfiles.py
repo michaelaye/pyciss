@@ -1,10 +1,13 @@
 """Support tools to work with PDS ISS indexfiles."""
-import pvl
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 import progressbar
+import pvl
+
 from planetpy import utils
-from urllib.request import urlretrieve
+
+from .io import config
 
 # The '2' stands for all data at Saturn, '1' would be all transit data.
 base_url = "http://pds-rings.seti.org/volumes/COISS_2xxx/COISS_"
@@ -57,7 +60,7 @@ class PVLColumn(object):
             for _ in range(self.items):
                 off = self.start + self.item_offset * i
                 bucket.append((off, off+self.item_bytes))
-                i+=1
+                i += 1
             return bucket
 
     def decode(self, linedata):
@@ -102,7 +105,7 @@ class TableLabel(object):
 
     @property
     def columns_dic(self):
-        return {col['NAME']:col for col in self.pvl_columns}
+        return {col['NAME']: col for col in self.pvl_columns}
 
     @property
     def colnames(self):
@@ -132,8 +135,10 @@ class TableLabel(object):
 class ImageTableLabel(TableLabel):
     tablename = 'IMAGE_INDEX_TABLE'
 
+
 class RDRIndexLabel(TableLabel):
     tablename = 'RDR_INDEX_TABLE'
+
 
 class RingGeoTableLabel(TableLabel):
     tablename = 'RING_GEOMETRY_TABLE'
@@ -200,9 +205,7 @@ def iss_index_to_df(indexpath, labelpath=None, convert_times=True):
     if convert_times:
         print("Converting times...")
         for column in [i for i in df.columns if 'TIME' in i]:
-            df[column] = pd.to_datetime(df[column].
-                                                map(utils.
-                                                    nasa_datetime_to_iso))
+            df[column] = pd.to_datetime(df[column].map(utils. nasa_datetime_to_iso))
 
     return df
 
@@ -242,8 +245,32 @@ def convert_indexfiles_to_hdf(folder):
           .format(savepath))
 
 
+def read_cumulative_index(indexdir=None):
+    "Read in the whole cumulative index and return dataframe."
+    if indexdir is None:
+        try:
+            indexdir = Path(config['pyciss_indexdir'])
+        except KeyError:
+            print("Did not find the key `pyciss_indexdir` in the config file.")
+            return
+
+    savepath = indexdir / 'cumindex.tab.hdf'
+    if savepath.exists():
+        return pd.read_hdf(savepath, 'df')
+    else:
+        df = iss_index_to_df(indexdir / 'cumindex.tab')
+        df.to_hdf(savepath, 'df')
+        return df
+
+
 class IndexDB(object):
-    def __init__(self, indexdir="/Volumes/Data/ciss/indexfiles"):
+    def __init__(self, indexdir=None):
+        if indexdir is None:
+            try:
+                indexdir = config['pyciss_indexdir']
+            except KeyError:
+                print("Did not find the key `pyciss_indexdir` in the config file.")
+                return
         self.indexdir = Path(indexdir)
 
     @property
@@ -253,16 +280,6 @@ class IndexDB(object):
     @property
     def cumulative_label(self):
         return ImageTableLabel(self.indexdir / 'cumindex.lbl')
-
-    def read_cumulative_index(self):
-        "Read in the whole cumulative index and return dataframe."
-        savepath = self.indexdir / 'cumindex.tab.hdf'
-        if savepath.exists():
-            return pd.read_hdf(savepath, 'df')
-        else:
-            df = iss_index_to_df(self.indexdir / 'cumindex.tab')
-            df.to_hdf(savepath, 'df')
-            return df
 
     def get_index_no(self, no):
         return iss_index_to_df(next(self.indexdir.glob('*_'+str(no)+'.tab')))
