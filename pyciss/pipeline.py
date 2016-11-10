@@ -1,19 +1,20 @@
 """ Note that the calibration starts from the LBL files, not the IMG !!! """
 from __future__ import division, print_function
 
+import logging
 import os
 from os.path import join as pjoin
+from pathlib import Path
 
 import numpy as np
-from pathlib import Path
+
 from pysis import IsisPool
+from pysis.exceptions import ProcessError
 from pysis.isis import (ciss2isis, cisscal, dstripe, editlab, getkey, isis2std,
                         ringscam2map, spiceinit)
 from pysis.util import file_variations
 
 from . import io
-from pysis.exceptions import ProcessError
-
 
 ISISDATA = Path(os.environ['ISIS3DATA'])
 
@@ -69,6 +70,7 @@ def calibrate_ciss(img_name, ringdata=True, map_project=False):
                                   '.cal.dst.cub',
                                   '.cal.dst.map.cub'])
     ciss2isis(from_=img_name, to=cub_name)
+    logging.info("Import to ISIS done.")
     targetname = getkey(from_=cub_name,
                         grp='instrument',
                         keyword='targetname')
@@ -88,9 +90,11 @@ def calibrate_ciss(img_name, ringdata=True, map_project=False):
                   shape='ringplane')
     else:
         spiceinit(from_=cub_name, cksmithed='yes', spksmithed='yes')
-
+    logging.info("spiceinit done.")
     cisscal(from_=cub_name, to=cal_name, units='I/F')
+    logging.info('cisscal done.')
     dstripe(from_=cal_name, to=dst_name, mode='horizontal')
+    logging.info('Destriping done.')
     if map_project:
         ringscam2map(from_=dst_name, to=map_name, defaultrange='Camera',
                      map=ISISDATA / 'base/templates/maps/ringcylindrical.map')
@@ -98,6 +102,7 @@ def calibrate_ciss(img_name, ringdata=True, map_project=False):
     else:
         isis2std(from_=dst_name, to=dst_name[:-3]+'tif', format='tiff',
                  minpercent=0, maxpercent=100)
+    logging.info('Map projecting done. Function finished.')
     return map_name
 
 
