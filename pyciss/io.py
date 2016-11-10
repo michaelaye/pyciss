@@ -1,5 +1,7 @@
-import yaml
 from pathlib import Path
+
+import pandas as pd
+import yaml
 
 try:
     from pysis.isis import getkey
@@ -64,6 +66,24 @@ def get_db_root():
     return dbroot
 
 
+def print_db_stats():
+    """Print database stats.
+
+    Returns
+    -------
+    pd.DataFrame
+        Table with the found data items per type.
+    """
+    dbroot = get_db_root()
+    n_ids = len(list(dbroot.glob("[N,W]*")))
+    print("Number of WACs and NACs in database: {}".format(n_ids))
+    print("These kind of data are in the database: (returning pd.DataFrame)")
+    d = {}
+    for key, val in PathManager.extensions.items():
+        d[key] = [len(list(dbroot.glob("**/*"+val)))]
+    return pd.DataFrame(d)
+
+
 class PathManager(object):
 
     """Manage paths to data in database.
@@ -71,7 +91,12 @@ class PathManager(object):
     The `.pyciss.yaml` config file determines the path to the database for ISS images.
     With this class you can access the different kind of files conveniently.
 
-    NOTE: This class will read the .pyciss.yaml to define the pyciss_db path, but
+    Using the stored extensions dictionary, the attributes of the object listed here are created
+    dynamically at object initialization and when the image_id is being set.
+
+    NOTE
+    ----
+    This class will read the .pyciss.yaml to define the pyciss_db path, but
     one can also call it with the savedir argument to override that.
 
     Parameters
@@ -93,79 +118,66 @@ class PathManager(object):
     raw_cub
     raw_label
     cube_path
+    tif
     """
+
+    extensions = {
+        'cubepath': '.cal.dst.map.cub',
+        'cal_cub': '.cal.cub',
+        'dst_cub': '.cal.dst.cub',
+        'raw_cub': '.cub',
+        'raw_label': '.LBL',
+        'raw_image': '.IMG',
+        'calib_img': '_CALIB.IMG',
+        'calib_label': '_CALIB.LBL',
+        'tif': '.cal.dst.map.tif',
+    }
 
     def __init__(self, img_id, savedir=None):
 
         if Path(img_id).is_absolute():
+            # the split is to remove the _1.IMG or _2.IMG from the path
+            # for the image id.
             self._id = Path(img_id).name.split('_')[0]
         else:
             # I'm using only filename until _ for storage
+            # TODO: Could this create a problem?
             self._id = img_id[:11]
-        if savedir is not None:
-            self._dbroot = Path(savedir)
+        if savedir is None:
+            self.dbroot = get_db_root()
         else:
-            self._dbroot = get_db_root()
+            self.dbroot = Path(savedir)
 
-        self._basepath = self._dbroot / self._id
+        self.set_attributes()
 
     @property
     def basepath(self):
-        return self._basepath
+        return self.dbroot / self._id
 
     @property
     def img_id(self):
         return self._id
 
-    def check_and_return(self, myiter):
-        l = list(myiter)
-        if l:
-            return l[0]
-        else:
-            print("No file found.")
-            return None
+    @img_id.setter
+    def img_id(self, value):
+        self._id = value
+        self.set_attributes()
 
-    def glob_for_pattern(self, pattern):
-        return self.check_and_return(self.basepath.glob(self._id + pattern))
+    def set_attributes(self):
+        for k, v in self.extensions.items():
+            try:
+                path = list(self.basepath.glob(self.img_id + '_?' + v))[0]
+            except IndexError:
+                path = None
+            setattr(self, k, path)
 
-    @property
-    def calib_img(self):
-        return self.glob_for_pattern("*_CALIB.IMG")
 
-    @property
-    def calib_label(self):
-        return self.glob_for_pattern("*_CALIB.LBL")
+class DBManager():
+    def __init__(self):
+        self.dbroot = get_db_root()
 
-    @property
-    def raw_image(self):
-        return self.glob_for_pattern("*_?.IMG")
-
-    @property
-    def raw_cub(self):
-        return self.glob_for_pattern("*_?.cub")
-
-    @property
-    def cal_cub(self):
-        return self.glob_for_pattern("*_?.cal.cub")
-
-    @property
-    def dst_cub(self):
-        "pathlib.Path : Path to destriped calibrated unprojected product."
-        return self.glob_for_pattern("*_?.cal.dst.cub")
-
-    @property
-    def raw_label(self):
-        try:
-            return self.raw_image.with_suffix('.LBL')
-        except AttributeError:
-            return None
-
-    @property
-    def cubepath(self):
-        try:
-            return self.raw_label.with_suffix('.cal.dst.map.cub')
-        except AttributeError:
-            return None
+    def print_stats(self):
+        print_db_stats()
 
 
 def is_lossy(label):
