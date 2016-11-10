@@ -27,7 +27,7 @@ install:
 # command to run tests, e.g. python setup.py test
 script:
     # - py.test -s --cov .
-    - cd pyciss/tests
+    - cd tests
     - py.test -v *.ipynb
 
 after_success:
