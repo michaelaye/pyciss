@@ -4,10 +4,11 @@ for OPUS data, metadata, and preview images.
 """
 from __future__ import division, print_function
 
+from pathlib import Path
+
 import pandas as pd
 import requests
 from IPython.display import HTML, display
-from pathlib import Path
 
 from . import io
 

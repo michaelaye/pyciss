@@ -16,6 +16,7 @@ def get_config():
         with configpath.open() as f:
             return yaml.load(f)
 
+
 if not configpath.exists():
     print("No configuration file {} found.\n".format(configpath))
     print("Please run `pyciss.io.set_database_path()` and provide the path where\n"
