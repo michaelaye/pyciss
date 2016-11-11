@@ -99,10 +99,11 @@ def calibrate_ciss(img_name, ringdata=True, map_project=False):
         ringscam2map(from_=dst_name, to=map_name, defaultrange='Camera',
                      map=ISISDATA / 'base/templates/maps/ringcylindrical.map')
         isis2std(from_=map_name, to=map_name[:-3]+'tif', format='tiff')
+        logging.info('Map projecting done. Function finished.')
     else:
         isis2std(from_=dst_name, to=dst_name[:-3]+'tif', format='tiff',
                  minpercent=0, maxpercent=100)
-    logging.info('Map projecting done. Function finished.')
+        logging.warning('Map projection was skipped, set map_project to True if wanted.')
     return map_name
 
 
