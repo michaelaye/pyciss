@@ -98,7 +98,7 @@ class RingCube(CubeFile):
 
     @property
     def extent(self):
-        return [self.minlon, self.maxlon, self.minrad, self.maxrad]
+        return [i.value for i in [self.minlon, self.maxlon, self.minrad, self.maxrad]]
 
     @property
     def resolution_val(self):
@@ -113,8 +113,12 @@ class RingCube(CubeFile):
         return self.filename.split('.')[0] + '.png'
 
     def imshow(self, data=None, plow=1, phigh=99, save=False, ax=None, fig=None,
-               interpolation='sinc', extra_title=None, show_resonances=True,
+               interpolation='sinc', extra_title=None, show_resonances='some',
                set_extent=True, **kwargs):
+        """Powerful default display that is broken without resonances. :(
+
+        show_resonances can be True, a list, 'all', or 'some'
+        """
         if data is None:
             data = self.img
         extent_val = self.extent if set_extent else None
@@ -155,14 +159,16 @@ class RingCube(CubeFile):
     def set_resonance_axis(self, ax, show_resonances):
         filter1 = (resonances['radius'] > (self.minrad_km))
         filter2 = (resonances['radius'] < (self.maxrad_km))
+        if show_resonances == 'some':
+            show_resonances = ['janus', 'prometheus', 'epimetheus']
         try:
             filter3 = (resonances.moon.isin(show_resonances))
         except TypeError:
-            # if show_resonances not a list, do nothing:
+            # if show_resonances not a list, do nothing, == 'all'
             filter3 = True
         newticks = resonances[filter1 & filter2 & filter3]
         ax2 = ax.twinx()
-        ax2.set_ybound(self.minrad, self.maxrad)
+        ax2.set_ybound(self.minrad.value, self.maxrad.value)
         ax2.ticklabel_format(useOffset=False)
         # i plot in Mm, hence the division by 1000 here.
         ax2.set_yticks(newticks.radius/1000)
