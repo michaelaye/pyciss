@@ -3,6 +3,8 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
+from collections import OrderedDict
+
 try:
     from pysis.isis import getkey
 except ImportError:
@@ -130,7 +132,7 @@ class PathManager(object):
     tif
     """
 
-    extensions = {
+    d = {
         'cubepath': '.cal.dst.map.cub',
         'cal_cub': '.cal.cub',
         'dst_cub': '.cal.dst.cub',
@@ -141,6 +143,8 @@ class PathManager(object):
         'calib_label': '_CALIB.LBL',
         'tif': '.cal.dst.map.tif',
     }
+    # ordered, sorted by key:
+    extensions = OrderedDict(sorted(d.items(), key=lambda t: t[0]))
 
     def __init__(self, img_id, savedir=None):
         self.input_img_id = img_id
