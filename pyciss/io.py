@@ -171,6 +171,15 @@ class PathManager(object):
                 path = None
             setattr(self, k, path)
 
+    def __str__(self):
+        s = ''
+        for k, v in self.extensions.items():
+            s += "{}: {}\n".format(k, getattr(self, k))
+        return s
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class DBManager():
     def __init__(self):
