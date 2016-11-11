@@ -12,12 +12,21 @@ configpath = Path.home() / '.pyciss.yaml'
 
 
 def get_config():
+    """Read the configfile and return config dict.
+
+    Returns
+    -------
+    dict
+        Dictionary with the content of the configpath file.
+    """
     if not configpath.exists():
         raise IOError("Config file .pyciss.yaml not found.")
     else:
         with configpath.open() as f:
             return yaml.load(f)
 
+
+# some root level code for config
 
 if not configpath.exists():
     print("No configuration file {} found.\n".format(configpath))
@@ -59,8 +68,8 @@ def db_label_paths():
 
 
 def get_db_root():
-    with configpath.open() as f:
-        d = yaml.load(f)
+    "Read dbroot folder from config and mkdir if required."
+    d = get_config()
     dbroot = Path(d['pyciss_db_path'])
     dbroot.mkdir(exist_ok=True)
     return dbroot
@@ -187,7 +196,12 @@ class PathManager(object):
     def __str__(self):
         s = ''
         for k, v in self.extensions.items():
-            s += "{}: {}\n".format(k, getattr(self, k))
+            s += "{}: ".format(k)
+            path = getattr(self, k)
+            if path.exists():
+                s += "{}\n".format(path)
+            else:
+                s += "not found.\n"
         return s
 
     def __repr__(self):
