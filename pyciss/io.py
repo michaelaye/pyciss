@@ -134,7 +134,7 @@ class PathManager(object):
     }
 
     def __init__(self, img_id, savedir=None):
-
+        self.input_img_id = img_id
         if Path(img_id).is_absolute():
             # the split is to remove the _1.IMG or _2.IMG from the path
             # for the image id.
@@ -148,7 +148,21 @@ class PathManager(object):
         else:
             self.dbroot = Path(savedir)
 
+        self.set_version()
         self.set_attributes()
+
+    def set_version(self):
+        id_ = Path(self.input_img_id).name
+        if len(id_) > 11:
+            self.version = id_[12]
+        else:
+            # if the given id was without version, check if a raw file is in database:
+            try:
+                rawpath = next(self.basepath.glob(self.img_id+"_?.IMG")).name
+            except StopIteration:
+                self.version = '0'
+            else:
+                self.version = rawpath[12]
 
     @property
     def basepath(self):
@@ -165,10 +179,9 @@ class PathManager(object):
 
     def set_attributes(self):
         for k, v in self.extensions.items():
-            try:
-                path = list(self.basepath.glob(self.img_id + '_?' + v))[0]
-            except IndexError:
-                path = None
+            path = self.basepath / ("{}_{}{}".format(self.img_id,
+                                                     self.version,
+                                                     v))
             setattr(self, k, path)
 
     def __str__(self):
