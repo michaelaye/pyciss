@@ -1,12 +1,20 @@
 pyciss
 ======
-
 Python utilities to work with Cassini's ISS camera system
+
+PyPI
+----
 
 .. image:: http://img.shields.io/pypi/v/pyciss.svg?style=flat
    :target: https://pypi.python.org/pypi/pyciss/
    :alt: Latest PyPI version
 
+Chat
+----
+
+.. image:: https://badges.gitter.im/michaelaye/pyciss.svg
+   :target: https://gitter.im/michaelaye/pyciss?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+   :alt: Link to Gitter chat room
 
 Fair use
 --------
