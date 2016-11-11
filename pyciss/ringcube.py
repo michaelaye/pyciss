@@ -3,6 +3,7 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+from astropy import units as u
 
 from pysis import CubeFile
 
@@ -67,28 +68,28 @@ class RingCube(CubeFile):
     @property
     def minrad(self):
         "float: MinimumRingRadius in Mm."
-        return self.mapping_label['MinimumRingRadius']/1e6
+        return self.mapping_label['MinimumRingRadius']/1e6 * u.Mm
 
     @property
     def minrad_km(self):
-        return self.minrad * 1000
+        return self.minrad.to(u.km)
 
     @property
     def maxrad(self):
         "float: MaxiumRingRadius in Mm."
-        return self.mapping_label['MaximumRingRadius']/1e6
+        return self.mapping_label['MaximumRingRadius']/1e6 * u.Mm
 
     @property
     def maxrad_km(self):
-        return self.maxrad * 1000
+        return self.maxrad.to(u.km)
 
     @property
     def minlon(self):
-        return self.mapping_label['MinimumRingLongitude']
+        return self.mapping_label['MinimumRingLongitude'] * u.degree
 
     @property
     def maxlon(self):
-        return self.mapping_label['MaximumRingLongitude']
+        return self.mapping_label['MaximumRingLongitude'] * u.degree
 
     @property
     def img(self):
@@ -101,11 +102,7 @@ class RingCube(CubeFile):
 
     @property
     def resolution_val(self):
-        return self.mapping_label['PixelResolution'].value
-
-    @property
-    def resolution_unit(self):
-        return self.mapping_label['PixelResolution'].units
+        return self.mapping_label['PixelResolution'].value * u.m / u.pixel
 
     @property
     def plottitle(self):
