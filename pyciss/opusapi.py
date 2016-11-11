@@ -55,8 +55,8 @@ class MetaData(object):
 
     @property
     def surface_geom(self):
-        """dict: Cassini surface geometry dictionary of the metadata"""
-        return self.r['Cassini Surface Geometry']
+        """dict: Saturn surface geometry dictionary of the metadata"""
+        return self.r['Saturn Surface Geometry']
 
     @property
     def mission(self):
@@ -77,11 +77,6 @@ class MetaData(object):
     def iss(self):
         """dict: ISS instrument related metadata dictionary"""
         return self.r['Cassini ISS Constraints']
-
-    @property
-    def surface(self):
-        """dict: Saturn surface geometry metadata dictionary"""
-        return self.r['Saturn Surface Geometry']
 
     @property
     def target_name(self):
