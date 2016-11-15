@@ -359,7 +359,7 @@ class OPUS(object):
             urlretrieve(obsid.medium_img_url, str(pm.basepath / basename))
 
 
-def download_and_calibrate(img_id):
+def download_and_calibrate(img_id, map_project=True):
     opus = OPUS()
     opus.query_image_id(img_id)
 
@@ -373,4 +373,4 @@ def download_and_calibrate(img_id):
     # and then you start the calibration pipeline, starting from the label
     # file which points to the image data, ISIS will find it:
 
-    pipeline.calibrate_ciss(pm.raw_label, map_project=False)
+    pipeline.calibrate_ciss(pm.raw_label, map_project=map_project)
