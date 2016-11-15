@@ -121,7 +121,7 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     ax[1].set_xlabel('Radius [Mm]')
     ax[1].set_ylabel('I/F')
     if soliton_controls_radius:
-        ax[1].set_xlim(xlow, xhigh)
+        ax[1].set_xlim(xlow.value, xhigh.value)
     else:
         ax[1].set_xlim(cube.minrad.value, cube.maxrad.value)
     ax3 = ax[1].twiny()
