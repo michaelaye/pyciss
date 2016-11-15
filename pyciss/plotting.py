@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
 from ipywidgets import fixed, interact
+from pathlib import Path
 
 interpolators = ['none', 'nearest', 'bilinear', 'bicubic',
                  'spline16', 'spline36', 'hanning', 'hamming',
@@ -133,5 +134,7 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     fig.tight_layout()
     savepath = "{}_{}.png".format(cube.pm.img_id, res_name)
     if saveroot is not None:
-        savepath = Path(saveroot) / savepath
+        root = Path(saveroot)
+        root.mkdir(exist_ok=True)
+        savepath = root / savepath
     fig.savefig(savepath, dpi=100)
