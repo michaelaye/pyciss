@@ -94,8 +94,8 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     if soliton_controls_radius:
         xlow = (res_radius - 20*u.km).to(u.Mm)
         xhigh = xlow + 0.2 * u.Mm
-        ax[0].set_ybound(xlow, xhigh)
-        ax2.set_ybound(xlow, xhigh)
+        ax[0].set_ybound(xlow.value, xhigh.value)
+        ax2.set_ybound(xlow.value, xhigh.value)
     else:
         ax2.set_ybound(cube.minrad.value, cube.maxrad.value)
 
