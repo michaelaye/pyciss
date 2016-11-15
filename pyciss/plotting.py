@@ -62,7 +62,8 @@ def add_ticks_to_x(ax, newticks, newnames):
 
 
 def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
-                 draw_prediction=True, soliton_controls_radius=False):
+                 draw_prediction=True, soliton_controls_radius=False,
+                 saveroot=None):
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 9), nrows=2)
     else:
@@ -130,4 +131,7 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     ax3.set_xticklabels(names)
     # add_ticks_to_x(ax[1], ticks, names)
     fig.tight_layout()
-    fig.savefig("{}_{}.png".format(cube.pm.img_id, res_name), dpi=100)
+    savepath = "{}_{}.png".format(cube.pm.img_id, res_name)
+    if saveroot is not None:
+        savepath = Path(saveroot) / savepath
+    fig.savefig(savepath, dpi=100)
