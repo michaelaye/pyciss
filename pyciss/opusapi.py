@@ -362,15 +362,19 @@ class OPUS(object):
 def download_and_calibrate(img_id, map_project=True):
     opus = OPUS()
     opus.query_image_id(img_id)
-
-    # if query returned satisfying results.
-    # Mostly will be 4 results, label + image for raw data, and label+image for calibrated image
-    opus.download_results()
-
+    
     # now you need a PathManager object that knows where your data is
     pm = io.PathManager(img_id)
 
+    # if raw_image exists skip downloading
+    # if query returned satisfying results.
+    # Mostly will be 4 results, label + image for raw data, and label+image for calibrated image
+    
+    if not pm.raw_image.exists():
+        opus.download_results()
+    
     # and then you start the calibration pipeline, starting from the label
     # file which points to the image data, ISIS will find it:
-
-    pipeline.calibrate_ciss(pm.raw_label, map_project=map_project)
+    # if cube file exists skip calibration
+    if not pm.cubepath.exists():
+        pipeline.calibrate_ciss(pm.raw_label, map_project=map_project)
