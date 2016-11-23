@@ -8,15 +8,19 @@ from pathlib import Path
 
 import numpy as np
 
-from pysis import IsisPool
-from pysis.exceptions import ProcessError
-from pysis.isis import (ciss2isis, cisscal, dstripe, editlab, getkey, isis2std,
-                        ringscam2map, spiceinit)
-from pysis.util import file_variations
+try:
+    from pysis import IsisPool
+    from pysis.exceptions import ProcessError
+    from pysis.isis import (ciss2isis, cisscal, dstripe, editlab, getkey, isis2std,
+                            ringscam2map, spiceinit)
+    from pysis.util import file_variations
+except ImportError:
+    print("Cannot load the ISIS system. pipeline module not functional.")
+else:
+    ISISDATA = Path(os.environ['ISIS3DATA'])
 
 from . import io
 
-ISISDATA = Path(os.environ['ISIS3DATA'])
 
 
 def calib_to_isis(pm_or_path):
