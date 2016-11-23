@@ -88,23 +88,23 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
             ticks.append(v.value)
             names.append(k)
 
-    ax2 = ax[0].twinx()
+    soliton_ax = ax[0].twinx()
 
     # soliton name and value, only using first found soliton
     # TODO: create function that deals with more than one soliton
     res_name, res_radius = next(iter(solitons.items()))
 
     if soliton_controls_radius:
-        xlow = (res_radius - 20*u.km).to(u.Mm)
-        xhigh = xlow + 0.2 * u.Mm
-        ax[0].set_ybound(xlow.value, xhigh.value)
-        ax2.set_ybound(xlow.value, xhigh.value)
+        radius_low = (res_radius - 20*u.km).to(u.Mm)
+        radius_high = radius_low + 0.2 * u.Mm
+        for tempax in [ax[0], soliton_ax, cube.resonance_axis]:
+            tempax.set_ybound(radius_low.value, radius_high.value)
     else:
-        ax2.set_ybound(cube.minrad.value, cube.maxrad.value)
+        soliton_ax.set_ybound(cube.minrad.value, cube.maxrad.value)
 
-    ax2.ticklabel_format(useOffset=False)
-    ax2.set_yticks(np.array(ticks)/1000)
-    ax2.set_yticklabels(names)
+    soliton_ax.ticklabel_format(useOffset=False)
+    soliton_ax.set_yticks(np.array(ticks)/1000)
+    soliton_ax.set_yticklabels(names)
 
     ax[1].plot(np.linspace(*cube.extent[2:], cube.img.shape[0]),
                np.nanmedian(cube.img, axis=1),
@@ -124,7 +124,7 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     ax[1].set_xlabel('Radius [Mm]')
     ax[1].set_ylabel('I/F')
     if soliton_controls_radius:
-        ax[1].set_xlim(xlow.value, xhigh.value)
+        ax[1].set_xlim(radius_low.value, radius_high.value)
     else:
         ax[1].set_xlim(cube.minrad.value, cube.maxrad.value)
     ax3 = ax[1].twiny()

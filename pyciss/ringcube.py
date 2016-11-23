@@ -173,7 +173,7 @@ class RingCube(CubeFile):
         # i plot in Mm, hence the division by 1000 here.
         ax2.set_yticks(newticks.radius/1000)
         ax2.set_yticklabels(newticks.name)
-        return ax2
+        self.resonance_axis = ax2
 
     @property
     def mean_profile(self):
