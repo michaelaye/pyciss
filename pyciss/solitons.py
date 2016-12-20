@@ -23,7 +23,7 @@ def create_polynoms():
     for resorder, row in zip('65 54 43 21'.split(),
                              range(4)):
         p = poly1d([res_df.loc[row, 'Slope (km/yr)'], res_df.loc[row, 'Intercept (km)']])
-        polys['janus'+resorder] = p
+        polys['janus' + resorder] = p
     return polys
 
 

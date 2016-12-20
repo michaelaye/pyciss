@@ -37,9 +37,9 @@ def myinteract(img):
     min_ = round(np.nanmin(img), 4)
     max_ = round(np.nanmax(img), 4)
     p30, p70 = np.percentile(img[~np.isnan(img)], (30, 70))
-    delta = round((p30-min_)/50, 5)
+    delta = round((p30 - min_) / 50, 5)
     interact(myimshow, img=fixed(img), vmin=(min_, p30, delta),
-             vmax=(p70, max_, delta), i=(0, len(interpolators)-1))
+             vmax=(p70, max_, delta), i=(0, len(interpolators) - 1))
 
 
 def imshowlowhigh(data, low=10, high=90):
@@ -83,7 +83,7 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     names = []
     if draw_prediction:
         for k, v in solitons.items():
-            ax[0].axhline(y=v.value/1000, alpha=1, color=solitoncolor, linestyle='dashdot',
+            ax[0].axhline(y=v.value / 1000, alpha=1, color=solitoncolor, linestyle='dashdot',
                           lw=4, xmin=0.25, xmax=0.5)
             ticks.append(v.value)
             names.append(k)
@@ -95,7 +95,7 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     res_name, res_radius = next(iter(solitons.items()))
 
     if soliton_controls_radius:
-        radius_low = (res_radius - 20*u.km).to(u.Mm)
+        radius_low = (res_radius - 20 * u.km).to(u.Mm)
         radius_high = radius_low + 0.2 * u.Mm
         for tempax in [ax[0], soliton_ax, cube.resonance_axis]:
             tempax.set_ybound(radius_low.value, radius_high.value)
@@ -103,7 +103,7 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
         soliton_ax.set_ybound(cube.minrad.value, cube.maxrad.value)
 
     soliton_ax.ticklabel_format(useOffset=False)
-    soliton_ax.set_yticks(np.array(ticks)/1000)
+    soliton_ax.set_yticks(np.array(ticks) / 1000)
     soliton_ax.set_yticklabels(names)
 
     ax[1].plot(np.linspace(*cube.extent[2:], cube.img.shape[0]),
@@ -114,7 +114,7 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     names = []
     if draw_prediction:
         for k, v in solitons.items():
-            ax[1].axvline(x=v.value/1000, alpha=1, color=solitoncolor, linestyle='dashdot',
+            ax[1].axvline(x=v.value / 1000, alpha=1, color=solitoncolor, linestyle='dashdot',
                           lw=4)
             ticks.append(v.value)
             names.append(k)
@@ -129,7 +129,7 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
         ax[1].set_xlim(cube.minrad.value, cube.maxrad.value)
     ax3 = ax[1].twiny()
     ax3.ticklabel_format(useOffset=False)
-    ax3.set_xticks(np.array(ticks)/1000)
+    ax3.set_xticks(np.array(ticks) / 1000)
     ax3.set_xticklabels(names)
     # add_ticks_to_x(ax[1], ticks, names)
     fig.tight_layout()

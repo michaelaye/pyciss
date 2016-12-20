@@ -27,7 +27,7 @@ class PVLColumn(object):
         if self.items is None:
             return [self.name]
         else:
-            return [self.name + '_' + str(i+1) for i in range(self.items)]
+            return [self.name + '_' + str(i + 1) for i in range(self.items)]
 
     @property
     def start(self):
@@ -59,7 +59,7 @@ class PVLColumn(object):
             bucket = []
             for _ in range(self.items):
                 off = self.start + self.item_offset * i
-                bucket.append((off, off+self.item_bytes))
+                bucket.append((off, off + self.item_bytes))
                 i += 1
             return bucket
 
@@ -282,4 +282,4 @@ class IndexDB(object):
         return ImageTableLabel(self.indexdir / 'cumindex.lbl')
 
     def get_index_no(self, no):
-        return iss_index_to_df(next(self.indexdir.glob('*_'+str(no)+'.tab')))
+        return iss_index_to_df(next(self.indexdir.glob('*_' + str(no) + '.tab')))

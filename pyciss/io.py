@@ -91,7 +91,7 @@ def print_db_stats():
     print("These kind of data are in the database: (returning pd.DataFrame)")
     d = {}
     for key, val in PathManager.extensions.items():
-        d[key] = [len(list(dbroot.glob("**/*"+val)))]
+        d[key] = [len(list(dbroot.glob("**/*" + val)))]
     return pd.DataFrame(d)
 
 
@@ -171,7 +171,7 @@ class PathManager(object):
         else:
             # if the given id was without version, check if a raw file is in database:
             try:
-                rawpath = next(self.basepath.glob(self.img_id+"_?.IMG")).name
+                rawpath = next(self.basepath.glob(self.img_id + "_?.IMG")).name
             except StopIteration:
                 self.version = '0'
             else:
