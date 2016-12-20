@@ -19,6 +19,7 @@ Contents:
 
    tutorial
    source/modules
+   examples.ipynb
 
 Indices and tables
 ==================
