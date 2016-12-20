@@ -27,7 +27,7 @@ meta_df = get_meta_df()
 
 def calc_4_3(width):
     "Calculate 4:3 ration for figures so that they import nicely in prezzies."
-    return (width, 3*width/4)
+    return (width, 3 * width / 4)
 
 
 class RingCube(CubeFile):
@@ -50,7 +50,7 @@ class RingCube(CubeFile):
     @property
     def meta_pixres(self):
         if self.meta is not None:
-            return int(self.meta.pixres*1000)
+            return int(self.meta.pixres * 1000)
         else:
             return np.nan
 
@@ -68,7 +68,7 @@ class RingCube(CubeFile):
     @property
     def minrad(self):
         "float: MinimumRingRadius in Mm."
-        return self.mapping_label['MinimumRingRadius']/1e6 * u.Mm
+        return self.mapping_label['MinimumRingRadius'] / 1e6 * u.Mm
 
     @property
     def minrad_km(self):
@@ -77,7 +77,7 @@ class RingCube(CubeFile):
     @property
     def maxrad(self):
         "float: MaxiumRingRadius in Mm."
-        return self.mapping_label['MaximumRingRadius']/1e6 * u.Mm
+        return self.mapping_label['MaximumRingRadius'] / 1e6 * u.Mm
 
     @property
     def maxrad_km(self):
@@ -139,11 +139,11 @@ class RingCube(CubeFile):
         ax.set_ylabel('Radius [Mm]')
         ax.ticklabel_format(useOffset=False)
         # ax.grid('on')
-        title = "{}, Metadata_Res: {} m/pix, {}, {}".format(
-                        self.plottitle,
-                        self.meta_pixres,
-                        self.imagetime.date().isoformat(),
-                        self.meta_litstatus)
+        title = ("{}, Metadata_Res: {} m/pix, {}, {}".format(
+                 self.plottitle,
+                 self.meta_pixres,
+                 self.imagetime.date().isoformat(),
+                 self.meta_litstatus))
         if extra_title:
             title += ', ' + extra_title
         ax.set_title(title, fontsize=14)
@@ -171,7 +171,7 @@ class RingCube(CubeFile):
         ax2.set_ybound(self.minrad.value, self.maxrad.value)
         ax2.ticklabel_format(useOffset=False)
         # i plot in Mm, hence the division by 1000 here.
-        ax2.set_yticks(newticks.radius/1000)
+        ax2.set_yticks(newticks.radius / 1000)
         ax2.set_yticklabels(newticks.name)
         self.resonance_axis = ax2
 
@@ -204,10 +204,10 @@ class RingCube(CubeFile):
         if data is None:
             data = self.img
         shape = self.img.shape
-        x1 = shape[0]//4
-        x2 = 3*shape[0]//4
-        y1 = shape[1]//4
-        y2 = 3*shape[1]//4
+        x1 = shape[0] // 4
+        x2 = 3 * shape[0] // 4
+        y1 = shape[1] // 4
+        y2 = 3 * shape[1] // 4
         return data[x1:x2, y1:y2]
 
     @property
