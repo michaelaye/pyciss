@@ -77,7 +77,7 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
         resonances = ['janus', 'prometheus', 'epimetheus']
 
     cube.imshow(show_resonances=resonances, ax=ax[0], fig=fig,
-                set_extent=True, plow=35)
+                set_extent=True)
 
     ticks = []
     names = []
