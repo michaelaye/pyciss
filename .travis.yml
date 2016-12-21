@@ -26,10 +26,8 @@ install:
 
 # command to run tests, e.g. python setup.py test
 script:
-    # - py.test -s --cov .
-    - cd tests
-    - py.test -v *.ipynb
-
+  - python setup.py test
+  
 after_success:
     - coveralls
     # - codecov
