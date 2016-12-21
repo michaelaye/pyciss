@@ -23,6 +23,8 @@ setup(
     packages=find_packages(),
 
     install_requires=['pandas'],
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest'],
 
     package_data={
         'pyciss': ['data/*', 'config.ini']

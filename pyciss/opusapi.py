@@ -1,5 +1,5 @@
 """This module is making use of the
-`OPUS API <http://pds-rings-tools.seti.org/opus/api/>`_ to create web request
+`OPUS API <http://pds-rings-tools.seti.org/opus/api/>`_ to create web requests
 for OPUS data, metadata, and preview images.
 """
 from __future__ import division, print_function
@@ -254,7 +254,7 @@ class OPUS(object):
                        limit=1000)
         return myquery
 
-    def get_time_query(self, t1, t2):
+    def _get_time_query(self, t1, t2):
         myquery = dict(instrumentid='Cassini+ISS',
                        timesec1=t1, timesec2=t2)
         return myquery
@@ -285,7 +285,7 @@ class OPUS(object):
         except AttributeError:
             # if not, should already be a string, so do nothing.
             pass
-        myquery = self.get_time_query(t1, t2)
+        myquery = self._get_time_query(t1, t2)
         if target is not None:
             myquery['target'] = target
         self.create_files_request(myquery, fmt='json')

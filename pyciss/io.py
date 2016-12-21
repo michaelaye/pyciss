@@ -1,3 +1,6 @@
+"""This module manages where downloaded data is stored via a config
+file. It also has a PathManager to support finding the paths to files
+of interest."""
 from pathlib import Path
 
 import pandas as pd
