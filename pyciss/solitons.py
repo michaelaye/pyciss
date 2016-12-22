@@ -1,6 +1,7 @@
 from datetime import datetime as dt
 
 import pandas as pd
+import pkg_resources as pr
 from astropy import units as u
 from numpy import poly1d
 
@@ -18,7 +19,8 @@ def create_polynoms():
     Uses the parameters from Morgan to create poly1d objects for
     calculations.
     """
-    res_df = pd.read_csv('./soliton_prediction_parameters.csv')
+    fname = pr.resource_filename('pyciss', 'data/soliton_prediction_parameters.csv')
+    res_df = pd.read_csv(fname)
     polys = {}
     for resorder, row in zip('65 54 43 21'.split(),
                              range(4)):
