@@ -6,7 +6,7 @@ Python utilities to work with Cassini's ISS camera system
 .. image:: https://travis-ci.org/michaelaye/pyciss.svg?branch=master
     :target: https://travis-ci.org/michaelaye/pyciss
 .. image:: https://coveralls.io/repos/github/michaelaye/pyciss/badge.svg?branch=master
-:target: https://coveralls.io/github/michaelaye/pyciss?branch=master
+    :target: https://coveralls.io/github/michaelaye/pyciss?branch=master
 .. image:: http://img.shields.io/pypi/v/pyciss.svg?style=flat
    :target: https://pypi.python.org/pypi/pyciss/
    :alt: Latest PyPI version
