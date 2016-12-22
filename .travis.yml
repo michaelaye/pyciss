@@ -17,8 +17,6 @@ install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION --file conda_requirements.txt
   - source activate test-environment
   - conda install pytest
-  # - pip install codecov
-  # - pip install pytest-cov
   - pip install coveralls
   - pip install pysis
   - pip install pytest-ipynb
