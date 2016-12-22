@@ -79,4 +79,4 @@ Acknowledgements
 
 * Morgan Rehnberg for providing me with Miodrag's data file and answering some of my newbie questions.
 
-* John Cutler and Matt Funk for improving the software
+* James Huffman, John Cutler, and Matt Funk for improving the software
