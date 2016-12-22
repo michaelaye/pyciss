@@ -4,7 +4,7 @@ of interest."""
 from pathlib import Path
 
 import pandas as pd
-import yaml
+import configparser
 
 from collections import OrderedDict
 
@@ -13,7 +13,13 @@ try:
 except ImportError:
     print("Cannot import ISIS system.")
 
-configpath = Path.home() / '.pyciss.yaml'
+
+def get_oldconfigpath():
+    return Path.home() / '.pyciss.yaml'
+
+
+def get_configpath():
+    return Path.home() / '.pyciss.ini'
 
 
 def get_config():
@@ -24,16 +30,37 @@ def get_config():
     dict
         Dictionary with the content of the configpath file.
     """
+    configpath = get_configpath()
     if not configpath.exists():
-        raise IOError("Config file .pyciss.yaml not found.")
+        raise IOError("Config file {} not found.".format(str(configpath)))
     else:
-        with configpath.open() as f:
-            return yaml.load(f)
+        config = configparser.ConfigParser()
+        config.read(str(configpath))
+        return config
+
+
+def transfer_config():
+    oldconfigpath = get_oldconfigpath()
+    configpath = get_configpath()
+    with oldconfigpath.open() as f:
+        yaml_config = f.readlines()
+    # clean up and break up into tokens
+    name, value = [i.strip() for i in yaml_config[0].split(': ')]
+    # create new configparser
+    config = configparser.ConfigParser()
+    config['pyciss_db'] = {}
+    config['pyciss_db']['path'] = value
+    with configpath.open('w') as configfile:
+        config.write(configfile)
+    oldconfigpath.unlink()
 
 
 # some root level code for config
-
-if not configpath.exists():
+oldconfigpath = get_oldconfigpath()
+configpath = get_configpath()
+if oldconfigpath.exists() and not configpath.exists():
+    transfer_config()
+elif not configpath.exists():
     print("No configuration file {} found.\n".format(configpath))
     print("Please run `pyciss.io.set_database_path()` and provide the path where\n"
           "you want to keep your automatically downloaded images.")
@@ -54,13 +81,15 @@ def set_database_path(dbfolder):
     dbfolder : str or pathlib.Path
         Path to where pyciss will store the ISS images it downloads and receives.
     """
+    configpath = get_configpath()
     try:
         d = get_config()
     except IOError:
-        d = {}
-    d['pyciss_db_path'] = dbfolder
+        d = configparser.ConfigParser()
+        d['pyciss_db'] = {}
+    d['pyciss_db']['path'] = dbfolder
     with configpath.open('w') as f:
-        yaml.dump(d, f, default_flow_style=False)
+        d.write(f)
     print("Saved database path into {}.".format(configpath))
 
 
@@ -75,7 +104,7 @@ def db_label_paths():
 def get_db_root():
     "Read dbroot folder from config and mkdir if required."
     d = get_config()
-    dbroot = Path(d['pyciss_db_path'])
+    dbroot = Path(d['pyciss_db']['path'])
     dbroot.mkdir(exist_ok=True)
     return dbroot
 
