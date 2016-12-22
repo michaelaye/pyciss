@@ -22,12 +22,12 @@ setup(
     version="0.6.0",
     packages=find_packages(),
 
-    install_requires=['pandas'],
+    install_requires=['pandas', 'numpy', 'matplotlib'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
 
     package_data={
-        'pyciss': ['data/*', 'config.ini']
+        'pyciss': ['data/*']
     },
 
     # metadata
