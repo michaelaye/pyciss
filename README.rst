@@ -2,19 +2,21 @@ pyciss
 ======
 Python utilities to work with Cassini's ISS camera system
 
-PyPI
-----
 
+.. image:: https://travis-ci.org/michaelaye/pyciss.svg?branch=master
+    :target: https://travis-ci.org/michaelaye/pyciss
+.. image:: https://coveralls.io/repos/github/michaelaye/pyciss/badge.svg?branch=master
+:target: https://coveralls.io/github/michaelaye/pyciss?branch=master
 .. image:: http://img.shields.io/pypi/v/pyciss.svg?style=flat
    :target: https://pypi.python.org/pypi/pyciss/
    :alt: Latest PyPI version
-
-Chat
-----
-
 .. image:: https://badges.gitter.im/michaelaye/pyciss.svg
    :target: https://gitter.im/michaelaye/pyciss?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
    :alt: Link to Gitter chat room
+.. image:: https://readthedocs.org/projects/pyciss/badge/?version=latest
+    :target: http://pyciss.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 
 Fair use
 --------
@@ -36,12 +38,7 @@ Bibtex record::
       url          = {http://dx.doi.org/10.5281/zenodo.53092}
     }
 
-Documentation
--------------
 
-.. image:: https://readthedocs.org/projects/pyciss/badge/?version=latest
-    :target: http://pyciss.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
 
 Homepage
 --------
@@ -72,13 +69,6 @@ github
 followed by:
 :code:`cd pyciss && pip install .`
 
-Continuous Integration
-----------------------
-
-.. image:: https://travis-ci.org/michaelaye/pyciss.svg?branch=master
-    :target: https://travis-ci.org/michaelaye/pyciss
-    
-TODO: Let's add the coverage badge here.
 
 Acknowledgements
 ----------------
