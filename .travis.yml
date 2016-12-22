@@ -6,7 +6,7 @@ python:
   - "3.5"
 install:
   - sudo apt-get update
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
@@ -14,7 +14,7 @@ install:
   - conda update -q conda
   - conda info -a
   # now my stuff
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION --file requirements.txt
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION --file conda_requirements.txt
   - source activate test-environment
   - conda install pytest
   # - pip install codecov
@@ -26,8 +26,8 @@ install:
 
 # command to run tests, e.g. python setup.py test
 script:
-  - python setup.py test
-  
+  - coverage run --source=pyciss setup.py test
+
 after_success:
     - coveralls
     # - codecov
