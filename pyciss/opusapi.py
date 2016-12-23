@@ -84,7 +84,7 @@ class MetaData(object):
         return self.mission['cassini_target_name']
 
 
-def get_dataframe_from_meta_dic(meta, attr_name):
+def _get_dataframe_from_meta_dic(meta, attr_name):
     d = getattr(meta, attr_name)
     df = pd.DataFrame({k: [v] for (k, v) in d.items()})
     df.index = [meta.img_id]
@@ -126,7 +126,7 @@ class OPUSObsID(object):
         except KeyError:
             self.calib = None
 
-    def get_img_url(self, size):
+    def _get_img_url(self, size):
         base = self.raw.label_url[:-4].replace('volumes', 'browse')
         return "{}_{}.jpg".format(base, size)
 
@@ -150,19 +150,19 @@ class OPUSObsID(object):
 
     @property
     def small_img_url(self):
-        return self.get_img_url('small')
+        return self._get_img_url('small')
 
     @property
     def medium_img_url(self):
-        return self.get_img_url('med')
+        return self._get_img_url('med')
 
     @property
     def thumb_img_url(self):
-        return self.get_img_url('thumb')
+        return self._get_img_url('thumb')
 
     @property
     def full_img_url(self):
-        return self.get_img_url('full')
+        return self._get_img_url('full')
 
     def get_meta_data(self):
         return MetaData(self.img_id)
@@ -310,7 +310,7 @@ class OPUS(object):
         except KeyError:
             print("Allowed keys:", d.keys())
             return
-        img_urls = [i.get_img_url(size) for i in self.obsids]
+        img_urls = [i._get_img_url(size) for i in self.obsids]
         imagesList = ''.join(["<img style='width: {0}px; margin: 0px; float: "
                               "left; border: 1px solid black;' "
                               "src='{1}' />"
@@ -340,7 +340,9 @@ class OPUS(object):
             for url in to_download:
                 basename = Path(url).name
                 print("Downloading", basename)
-                urlretrieve(url, str(pm.basepath / basename))
+                store_path = str(pm.basepath / basename)
+                urlretrieve(url, store_path)
+            return str(pm.basepath)
 
     def download_previews(self, savedir=None):
         """Download preview files for the previously found and stored Opus obsids.
