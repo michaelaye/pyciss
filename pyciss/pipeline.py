@@ -37,7 +37,7 @@ def calib_to_isis(pm_or_path):
     return cub_name
 
 
-def calibrate_ciss(img_name, ringdata=True, map_project=False):
+def calibrate_ciss(img_name, ringdata=True, map_project=True, do_dstripe=True):
     """
     Calibrate raw Cassini ISS images using ISIS.
 
@@ -51,8 +51,11 @@ def calibrate_ciss(img_name, ringdata=True, map_project=False):
 
     Parameters
     ----------
-    img_name : pathlib.Path, str
-        Absolute path to image
+    img_name : io.PathManager, pathlib.Path, str
+        Absolute path to image or io.PathManager object with raw_label attribute.
+        If img_name has no attribute `raw_label`, I try to initialize a PathManager
+        with `img_name` to see if I have received an image_id string here.
+        Last thing I try is just a path.
 
     Returns
     -------
@@ -62,8 +65,11 @@ def calibrate_ciss(img_name, ringdata=True, map_project=False):
     try:
         img_name = str(img_name.raw_label)
     except AttributeError:
-        # doesn't seem to be the case, so I assume it's just a path
-        img_name = str(img_name)
+        try:
+            pm = io.PathManager(img_name)
+            img_name = str(pm.raw_label)
+        except:
+            img_name = str(img_name)
     (cub_name,
      cal_name,
      dst_name,
@@ -96,15 +102,20 @@ def calibrate_ciss(img_name, ringdata=True, map_project=False):
     logging.info("spiceinit done.")
     cisscal(from_=cub_name, to=cal_name, units='I/F')
     logging.info('cisscal done.')
-    dstripe(from_=cal_name, to=dst_name, mode='horizontal')
-    logging.info('Destriping done.')
+    if do_dstripe:
+        dstripe(from_=cal_name, to=dst_name, mode='horizontal')
+        logging.info('Destriping done.')
+        next_ = dst_name
+    else:
+        next_ = cal_name
+        map_name = '.cal.map.cub'
     if map_project:
-        ringscam2map(from_=dst_name, to=map_name, defaultrange='Camera',
+        ringscam2map(from_=next_, to=map_name, defaultrange='Camera',
                      map=ISISDATA / 'base/templates/maps/ringcylindrical.map')
         isis2std(from_=map_name, to=map_name[:-3] + 'tif', format='tiff')
         logging.info('Map projecting done. Function finished.')
     else:
-        isis2std(from_=dst_name, to=dst_name[:-3] + 'tif', format='tiff',
+        isis2std(from_=next_, to=next_[:-3] + 'tif', format='tiff',
                  minpercent=0, maxpercent=100)
         logging.warning('Map projection was skipped, set map_project to True if wanted.')
     return map_name
