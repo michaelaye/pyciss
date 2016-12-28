@@ -11,7 +11,6 @@ import requests
 from IPython.display import HTML, display
 
 from . import io
-from . import pipeline
 
 try:
     from urllib.request import unquote, urlretrieve
@@ -359,24 +358,3 @@ class OPUS(object):
             basename = Path(obsid.medium_img_url).name
             print("Downloading", basename)
             urlretrieve(obsid.medium_img_url, str(pm.basepath / basename))
-
-
-def download_and_calibrate(img_id, map_project=True, overwrite=False):
-    opus = OPUS()
-    opus.query_image_id(img_id)
-
-    # now you need a PathManager object that knows where your data is
-    pm = io.PathManager(img_id)
-
-    # if raw_image exists skip downloading
-    # if query returned satisfying results.
-    # Mostly will be 4 results, label + image for raw data, and label+image for calibrated image
-
-    if not pm.raw_image.exists():
-        opus.download_results()
-
-    # and then you start the calibration pipeline, starting from the label
-    # file which points to the image data, ISIS will find it:
-    # if cube file exists skip calibration
-    if not pm.cubepath.exists() or overwrite is True:
-        pipeline.calibrate_ciss(pm.raw_label, map_project=map_project)
