@@ -22,6 +22,9 @@ else:
 from . import io
 
 
+logger = logging.getLogger(__name__)
+
+
 def calib_to_isis(pm_or_path):
     try:
         img_name = str(pm_or_path.calib_label)
@@ -79,10 +82,11 @@ def calibrate_ciss(img_name, ringdata=True, map_project=True, do_dstripe=True):
                                   '.cal.dst.cub',
                                   '.cal.dst.map.cub'])
     ciss2isis(from_=img_name, to=cub_name)
-    logging.info("Import to ISIS done.")
+    logger.info("Import to ISIS done.")
     targetname = getkey(from_=cub_name,
                         grp='instrument',
                         keyword='targetname')
+
     # forcing the target name to Saturn here, because some observations of
     # the rings have moons as a target, but then the standard map projection
     # onto the Saturn ring plane fails.
@@ -99,26 +103,31 @@ def calibrate_ciss(img_name, ringdata=True, map_project=True, do_dstripe=True):
                   shape='ringplane')
     else:
         spiceinit(from_=cub_name, cksmithed='yes', spksmithed='yes')
-    logging.info("spiceinit done.")
+    logger.info("spiceinit done.")
+
+    # calibration
     cisscal(from_=cub_name, to=cal_name, units='I/F')
-    logging.info('cisscal done.')
+    logger.info('cisscal done.')
+
+    # destriping
     if do_dstripe:
         dstripe(from_=cal_name, to=dst_name, mode='horizontal')
-        logging.info('Destriping done.')
+        logger.info('Destriping done.')
         next_ = dst_name
     else:
         next_ = cal_name
-        map_name = '.cal.map.cub'
+
+    # map projection
     if map_project:
         ringscam2map(from_=next_, to=map_name, defaultrange='Camera',
                      map=ISISDATA / 'base/templates/maps/ringcylindrical.map')
         isis2std(from_=map_name, to=map_name[:-3] + 'tif', format='tiff')
-        logging.info('Map projecting done. Function finished.')
+        logger.info('Map projecting done. Function finished.')
     else:
         isis2std(from_=next_, to=next_[:-3] + 'tif', format='tiff',
                  minpercent=0, maxpercent=100)
-        logging.warning('Map projection was skipped, set map_project to True if wanted.')
-    return map_name
+        logger.warning('Map projection was skipped, set map_project to True if wanted.')
+    return
 
 
 def remapping(img_name):
