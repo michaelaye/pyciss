@@ -10,7 +10,7 @@ def download_file_id(file_id):
     print("Downloaded images into {}".format(basepath))
 
 
-def download_and_calibrate(img_id, map_project=True, overwrite=False):
+def download_and_calibrate(img_id, overwrite=False, **kwargs):
     # get a PathManager object that knows where your data is or should be
     pm = io.PathManager(img_id)
 
@@ -24,4 +24,4 @@ def download_and_calibrate(img_id, map_project=True, overwrite=False):
     # start the calibration pipeline.
     # if cube file exists skip calibration if not overwrite
     if not pm.cubepath.exists() or overwrite is True:
-        pipeline.calibrate_ciss(pm, map_project=map_project)
+        pipeline.calibrate_ciss(pm, **kwargs)
