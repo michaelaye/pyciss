@@ -1,3 +1,7 @@
+from .io import config
+import pandas as pd
+from pathlib import Path
+
 
 def read_cumulative_iss_index():
     "Read in the whole cumulative index and return dataframe."
@@ -21,7 +25,7 @@ class IndexDB(object):
     def __init__(self, indexdir=None):
         if indexdir is None:
             try:
-                indexdir = config['pyciss_indexdir']
+                indexdir = config['pyciss_index']['path']
             except KeyError:
                 print("Did not find the key `pyciss_indexdir` in the config file.")
                 return
