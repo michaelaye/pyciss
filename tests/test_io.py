@@ -63,3 +63,53 @@ def test_set_database_path_not_found(monkeypatch, configpath):
     config = configparser.ConfigParser()
     config.read(str(configpath))
     assert config['pyciss_db']['path'] == '/test/path'
+
+
+class TestPathManager:
+    def mockdbpath(self):
+        return Path('/abc/db')
+
+    @pytest.fixture
+    def dbroot(self, monkeypatch):
+        monkeypatch.setattr(io, 'get_db_root', self.mockdbpath)
+
+    @pytest.fixture
+    def pm(self, dbroot):
+        return io.PathManager('N1234')
+
+    def test_init_with_full_path(self, dbroot):
+        pm = io.PathManager('/def/N1234_1.IMG')
+        assert pm._id == 'N1234'
+
+    def test_dbroot(self, pm):
+        assert pm.dbroot == Path('/abc/db')
+
+    def test_with_relative_path(self, dbroot):
+        pm = io.PathManager('0123456789ABCD')
+        assert pm._id == '0123456789A'
+
+    def test_basepath(self, pm):
+        assert pm.basepath == Path('/abc/db/N1234')
+
+    def test_version(self, dbroot):
+        pm = io.PathManager('N1234567890_1')
+        assert pm.version == '1'
+
+    def test_cubepath(self, pm):
+        assert isinstance(pm.cubepath, Path)
+        # note version 0 string!
+        assert str(pm.cubepath) == '/abc/db/N1234/N1234_0.cal.dst.map.cub'
+
+    def test_cal_cub(self, pm):
+        assert str(pm.cal_cub) == '/abc/db/N1234/N1234_0.cal.cub'
+
+    def test_dst_cub(self, pm):
+        assert str(pm.dst_cub) == '/abc/db/N1234/N1234_0.cal.dst.cub'
+
+    def test_raw_cub(self, pm):
+        assert str(pm.raw_cub) == '/abc/db/N1234/N1234_0.cub'
+
+    ###
+    # continue here with other keys of the `d` dictionary
+    # in PathManager
+    ###
