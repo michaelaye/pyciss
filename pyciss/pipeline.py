@@ -130,6 +130,139 @@ def calibrate_ciss(img_name, ringdata=True, map_project=True, do_dstripe=True):
     return
 
 
+class Calibrator(object):
+    """Calibrate raw Cassini ISS images using ISIS.
+
+    This is a cleaner reimplementation of the calibrate_ciss function.
+
+    ISIS is using an official released version the calibration routine `cisscal`
+    that is being developed under IDL, but has been converted to C++ for ISIS.
+    I am using the pipeline as described here:
+    https://isis.astrogeology.usgs.gov/IsisWorkshop/index.php/Working_with_Cassini_ISS_Data
+    It is customary to indicate the pipeline of ISIS apps that a file went through
+    with a chain of extensions, e.g. '.cal.dst.map.cub', indicating calibration,
+    destriping, and map projection.
+
+    Parameters
+    ----------
+    img_name : io.PathManager, pathlib.Path, str
+        Absolute path to image or io.PathManager object with raw_label attribute.
+        If img_name has no attribute `raw_label`, I try to initialize a PathManager
+        with `img_name` to see if I have received an image_id string here.
+        Last thing I try is just a path.
+    is_ring_data : bool
+        Switch to tell the Calibrator if its dealing with ringdata.
+        If True, it will check the label for the correct target (required for correct
+        spiceinit and map projection) and will control spice
+
+    Returns
+    -------
+    str : absolute path to last produced ISIS cube in pipeline.
+
+    """
+    map_path = ISISDATA / 'base/templates/maps/ringcylindrical.map'
+
+    def __init__(self, img_name, is_ring_data=True, do_map_project=True, do_dstripe=True):
+        self.img_name = self.parse_img_name()
+        self.is_ring_data = is_ring_data
+        self.do_map_project = do_map_project
+        self.do_dstripe = do_dstripe
+
+        pm = self.pm  # save typing
+
+        # import PDS into ISIS
+        ciss2isis(from_=pm.raw_label, to=pm.raw_cub)
+        logger.info("Import to ISIS done.")
+
+        # check if label fits with data
+        self.check_label()
+
+        # initialize spice kernels into label
+        self.spiceinit()
+
+        # calibration, use I/F as units
+        cisscal(from_=pm.raw_cub, to=pm.cal_cub, units='I/F')
+        logger.info('cisscal done.')
+        end = pm.cal_cub  # keep track of last produced path
+
+        # destriping
+        if do_dstripe:
+            dstripe(from_=pm.cal_cub, to=pm.dst_cub, mode='horizontal')
+            logger.info('Destriping done.')
+            end = pm.dst_cub
+        else:
+            logger.warning("Destriping skipped, as requested.")
+
+        if do_map_project:
+            if do_dstripe:
+                start = pm.dst_cub
+                end = pm.cubepath
+            else:
+                start = pm.cal_cub
+                end = pm.undestriped
+            ringscam2map(from_=start, to=end, defaultrange='Camera',
+                         map=self.map_path)
+        else:
+            logger.warning("Map projection was skipped.\n"
+                           "Set map_project to True if wanted.")
+
+        # create tif quickview
+        isis2std(from_=end, to=end.with_suffix('.tif'), format='tiff')
+        logger.info()
+
+    def spiceinit(self):
+        """Perform either normal spiceinit or one for ringdata.
+
+        Note how Python name-spacing can distinguish between the method
+        and the function with the same name. `spiceinit` from the outer
+        namespace is the one imported from pysis.
+        """
+        shape = 'ringplane' if self.is_ring_data else None
+        spiceinit(from_=self.pm.raw_cub, cksmithed='yes',
+                  spksmithed='yes', shape=shape)
+        logger.info("spiceinit done.")
+
+    def check_label(self):
+        """ Check label for target and fix if necessary.
+
+        Forcing the target name to Saturn here, because some observations of
+        the rings have moons as a target, but then the standard map projection
+        onto the Saturn ring plane fails.
+
+        See also
+        --------
+        https://isis.astrogeology.usgs.gov/IsisSupport/index.php/topic,3922.0.html
+        """
+        if not self.is_ring_data:
+            return
+        targetname = getkey(from_=self.pm.raw_cub,
+                            grp='instrument',
+                            keyword='targetname')
+
+        if targetname.lower() != 'saturn':
+            editlab(from_=self.pm.raw_cub, options='modkey',
+                    keyword='TargetName', value='Saturn',
+                    grpname='Instrument')
+
+    def parse_img_name(self):
+        img_name = self.img_name
+        # Check if img_name is maybe a PathManager object with a `raw_label` attribute:
+        try:
+            # if img_name is a PathManager:
+            self.img_name = str(img_name.raw_label)
+            self.pm = img_name
+        except AttributeError:
+            try:
+                # if img_name is just the ID itself:
+                self.pm = io.PathManager(img_name)
+                self.img_name = str(self.pm.raw_label)
+            except:
+                # if it's actually the path:
+                self.img_name = str(img_name)
+                # PathManager can deal with absolute paths
+                self.pm = io.PathManager(img_name)
+
+
 def remapping(img_name):
     (cal_name, map_name) = file_variations(img_name,
                                            ['.cal.cub', '.map.cal.cub'])
