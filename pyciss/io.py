@@ -162,6 +162,7 @@ class PathManager(object):
     raw_label
     cube_path
     tif
+    undestriped
     """
 
     d = {
@@ -174,6 +175,7 @@ class PathManager(object):
         'calib_img': '_CALIB.IMG',
         'calib_label': '_CALIB.LBL',
         'tif': '.cal.dst.map.tif',
+        'undestriped': '.cal.map.cub'
     }
     # ordered, sorted by key:
     extensions = OrderedDict(sorted(d.items(), key=lambda t: t[0]))
