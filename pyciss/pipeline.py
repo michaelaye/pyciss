@@ -207,8 +207,9 @@ class Calibrator(object):
                            "Set map_project to True if wanted.")
 
         # create tif quickview
-        isis2std(from_=end, to=end.with_suffix('.tif'), format='tiff')
-        logger.info()
+        tifname = end.with_suffix('tif')
+        isis2std(from_=end, to=tifname, format='tiff')
+        logger.info("Created tif from last product: %s", tifname)
 
     def spiceinit(self):
         """Perform either normal spiceinit or one for ringdata.
