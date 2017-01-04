@@ -207,7 +207,7 @@ class Calibrator(object):
                            "Set map_project to True if wanted.")
 
         # create tif quickview
-        tifname = end.with_suffix('tif')
+        tifname = end.with_suffix('.tif')
         isis2std(from_=end, to=tifname, format='tiff')
         logger.info("Created tif from last product: %s", tifname)
 
