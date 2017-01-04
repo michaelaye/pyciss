@@ -163,7 +163,7 @@ class Calibrator(object):
     map_path = ISISDATA / 'base/templates/maps/ringcylindrical.map'
 
     def __init__(self, img_name, is_ring_data=True, do_map_project=True, do_dstripe=True):
-        self.img_name = self.parse_img_name()
+        self.img_name = self.parse_img_name(img_name)
         self.is_ring_data = is_ring_data
         self.do_map_project = do_map_project
         self.do_dstripe = do_dstripe
@@ -244,8 +244,7 @@ class Calibrator(object):
                     keyword='TargetName', value='Saturn',
                     grpname='Instrument')
 
-    def parse_img_name(self):
-        img_name = self.img_name
+    def parse_img_name(self, img_name):
         # Check if img_name is maybe a PathManager object with a `raw_label` attribute:
         try:
             # if img_name is a PathManager:
