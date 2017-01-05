@@ -26,7 +26,15 @@ meta_df = get_meta_df()
 
 
 def calc_4_3(width):
-    "Calculate 4:3 ration for figures so that they import nicely in prezzies."
+    """Calculate 4:3 ratio for figures.
+
+    so that they import nicely in prezzies.
+
+    Parameters
+    ----------
+    width : int, float
+        Width of plotting window
+    """
     return (width, 3 * width / 4)
 
 
