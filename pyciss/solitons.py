@@ -50,7 +50,10 @@ def check_for_soliton(img_id):
         that it could be more than one in one image.
     """
     pm = io.PathManager(img_id)
-    ringcube = RingCube(pm.cubepath)
+    try:
+        ringcube = RingCube(pm.cubepath)
+    except FileNotFoundError:
+        ringcube = RingCube(pm.undestriped)
     polys = create_polynoms()
     minrad = ringcube.minrad.to(u.km)
     maxrad = ringcube.maxrad.to(u.km)
