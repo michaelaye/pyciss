@@ -10,6 +10,7 @@ from pysis import CubeFile
 from .io import PathManager
 from .meta import get_all_resonances, get_meta_df
 from .opusapi import MetaData
+from ._utils import which_epi_janus_resonance
 
 try:
     # prettier plots with seaborn
@@ -123,7 +124,7 @@ class RingCube(CubeFile):
     def imshow(self, data=None, plow=1, phigh=99, save=False, ax=None, fig=None,
                interpolation='sinc', extra_title=None, show_resonances='some',
                set_extent=True, **kwargs):
-        """Powerful default display that is broken without resonances. :(
+        """Powerful default display.
 
         show_resonances can be True, a list, 'all', or 'some'
         """
@@ -135,9 +136,8 @@ class RingCube(CubeFile):
         self.max_ = max_
         if ax is None:
             if not _SEABORN_INSTALLED:
-                fig, ax = plt.subplots(figsize=calc_4_3(9))
+                fig, ax = plt.subplots(figsize=calc_4_3(8))
             else:
-                sns.set_context('talk')
                 fig, ax = plt.subplots()
         im = ax.imshow(data, extent=extent_val, cmap='gray', vmin=min_,
                        vmax=max_, interpolation=interpolation, origin='lower',
@@ -169,8 +169,17 @@ class RingCube(CubeFile):
         filter2 = (resonances['radius'] < (self.maxrad_km))
         if show_resonances == 'some':
             show_resonances = ['janus', 'prometheus', 'epimetheus']
+        # check for janus/epimetheus year and copy over items
+        # into final moons list
+        moons = []
+        for moon in show_resonances:
+            if moon in ['janus', 'epimetheus']:
+                moons.append(which_epi_janus_resonance(moon,
+                                                       self.imagetime))
+            else:
+                moons.append(moon)
         try:
-            filter3 = (resonances.moon.isin(show_resonances))
+            filter3 = (resonances.moon.isin(moons))
         except TypeError:
             # if show_resonances not a list, do nothing, == 'all'
             filter3 = True

@@ -3,9 +3,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
-from astropy.time import Time
 from ipywidgets import fixed, interact
 
+from ._utils import which_epi_janus_resonance
 from .meta import get_all_resonances
 
 resonance_table = get_all_resonances()
@@ -68,34 +68,6 @@ def add_ticks_to_x(ax, newticks, newnames):
     ax.set_xticklabels(names)
 
 
-def which_epi_janus_resonance(name, time):
-    """Find which swap situtation we are in by time.
-
-    Starting from 2006-01-21 where a Janus-Epimetheus swap occured, and
-    defining the next 4 years until the next swap as `scenario1, and the 4
-    years after that `scenario2`.
-    Calculate in units of 4 years, in which scenario the given time falls.
-
-    Parameters
-    ----------
-    time : timestring, datetime
-        Time of the image. The astropy Time object can deal with both formats.
-
-    Returns
-    -------
-    str
-        The given name string (either `janus` or `epimetheus`) and attach
-        a 1 or 2, as appropriate.
-    """
-    t1 = Time('2006-01-21').to_datetime()
-    delta = Time(time).to_datetime() - t1
-    yearfraction = delta.days / 365
-    if int(yearfraction / 4) % 2 == 0:
-        return name + '1'
-    else:
-        return name + '2'
-
-
 def get_res_radius_from_res_name(res_name, cube):
     moon, resonance = res_name.split()
     moon = which_epi_janus_resonance(moon, cube.imagetime)
@@ -125,32 +97,40 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     if draw_prediction:
         for k, v in solitons.items():
             ax[0].axhline(y=v.to('Mm').value, alpha=1, color=solitoncolor,
-                          linestyle='dashdot', lw=3, xmin=0.0, xmax=0.3)
-            ticks.append(v.to('Mm').value)
-            names.append(k)
+                          linestyle='dashdot', lw=3, xmin=0.0, xmax=0.25)
+            # the following is only really required if i want to show more
+            # than one prediction line
+            # ticks.append(v.to('Mm').value)
+            # names.append(k)
 
     # soliton name and value, only using first found soliton
     # TODO: create function that deals with more than one soliton
     res_name, soliton_radius = next(iter(solitons.items()))
+    res_radius = get_res_radius_from_res_name(res_name, cube)
+    ax[0].axhline(y=res_radius.to('Mm').value, alpha=0.5,
+                  color='cyan', linestyle='dotted', lw=3,
+                  xmin=0.75, xmax=1.0)
 
-    soliton_ax = ax[0].twinx()
+    soliton_ax = None
+    # soliton_ax = ax[0].twinx()
+    # soliton_ax.ticklabel_format(useOffset=False)
+    # soliton_ax.set_yticks(np.array(ticks))
+    # soliton_ax.set_yticklabels(names)
+    # soliton_ax.axhline(y=res_radius.to('Mm').value, alpha=0.5,
+    #                    color='cyan', linestyle='dotted', lw=3,
+    #                    xmin=0.7, xmax=1.0)
+
     if soliton_controls_radius:
-        res_radius = get_res_radius_from_res_name(res_name, cube)
         radius_low = (res_radius - 20 * u.km).to(u.Mm)
         radius_high = radius_low + 200 * u.km
-        for tempax in [ax[0], soliton_ax, cube.resonance_axis]:
+        for tempax in [ax[0], cube.resonance_axis]:
             tempax.set_ybound(radius_low.value, radius_high.value)
+        if soliton_ax:
+            soliton_ax.set_ybound(radius_low.value, radius_high.value)
     else:
         # the min/max image radii otherwise control the plot in cube.imshow()
         # so set the soliton display axis to the same values
         soliton_ax.set_ybound(cube.minrad.value, cube.maxrad.value)
-
-    soliton_ax.ticklabel_format(useOffset=False)
-    soliton_ax.set_yticks(np.array(ticks))
-    soliton_ax.set_yticklabels(names)
-    soliton_ax.axhline(y=res_radius.to('Mm').value, alpha=0.5,
-                       color='cyan', linestyle='dotted', lw=3,
-                       xmin=0.7, xmax=1.0)
 
     ax[1].plot(np.linspace(*cube.extent[2:], cube.img.shape[0]),
                np.nanmedian(cube.img, axis=1),
@@ -171,15 +151,12 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     ax[1].set_title('Longitude-median profile over radius')
     ax[1].set_xlabel('Radius [Mm]')
     ax[1].set_ylabel('I/F')
+
     if soliton_controls_radius:
         ax[1].set_xlim(radius_low.value, radius_high.value)
     else:
         ax[1].set_xlim(cube.minrad.value, cube.maxrad.value)
-    ax3 = ax[1].twiny()
-    ax3.ticklabel_format(useOffset=False)
-    ax3.set_xticks(np.array(ticks))
-    ax3.set_xticklabels(names)
-    # add_ticks_to_x(ax[1], ticks, names)
+
     fig.tight_layout()
     savepath = "{}_{}.png".format(cube.pm.img_id, '_'.join(res_name.split()))
     if saveroot is not None:
