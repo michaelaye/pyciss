@@ -82,7 +82,7 @@ def get_prime_jan_epi():
     jan_epi_resonances = get_janus_epimetheus_resonances()
     # remove orders > 1 and drop unrequired columns
     prime_jan_epis = jan_epi_resonances[jan_epi_resonances.order == 1]
-    to_drop = ['order', 'moon', 'reson']
+    to_drop = ['order', 'moon']
     prime_jan_epis = prime_jan_epis.drop(to_drop, axis=1)
     return prime_jan_epis
 
