@@ -5,6 +5,9 @@ import pkg_resources as pr
 from astropy import units as u
 from numpy import poly1d
 
+from . import io
+from .ringcube import RingCube
+
 
 def get_year_since_resonance(ringcube):
     "Calculate the fraction of the year since moon swap."
@@ -25,11 +28,11 @@ def create_polynoms():
     for resorder, row in zip('65 54 43 21'.split(),
                              range(4)):
         p = poly1d([res_df.loc[row, 'Slope (km/yr)'], res_df.loc[row, 'Intercept (km)']])
-        polys['janus' + resorder] = p
+        polys['janus ' + ':'.join(resorder)] = p
     return polys
 
 
-def check_for_soliton(ringcube):
+def check_for_soliton(img_id):
     """Workhorse function.
 
     Creates the polynom.
@@ -46,6 +49,8 @@ def check_for_soliton(ringcube):
         Dictionary with all solitons found. Reason why it is a dict is
         that it could be more than one in one image.
     """
+    pm = io.PathManager(img_id)
+    ringcube = RingCube(pm.cubepath)
     polys = create_polynoms()
     minrad = ringcube.minrad.to(u.km)
     maxrad = ringcube.maxrad.to(u.km)
