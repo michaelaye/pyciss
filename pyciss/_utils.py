@@ -20,10 +20,10 @@ def which_epi_janus_resonance(name, time):
         The given name string (either `janus` or `epimetheus`) and attach
         a 1 or 2, as appropriate.
     """
-    t1 = Time('2006-01-21').to_datetime()
+    t1 = Time('2002-01-21').to_datetime()
     delta = Time(time).to_datetime() - t1
     yearfraction = delta.days / 365
     if int(yearfraction / 4) % 2 == 0:
-        return name + '1'
-    else:
         return name + '2'
+    else:
+        return name + '1'
