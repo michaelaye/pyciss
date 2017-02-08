@@ -85,15 +85,15 @@ class TestPathManager:
         assert pm.dbroot == Path('/abc/db')
 
     def test_with_relative_path(self, dbroot):
-        pm = io.PathManager('0123456789ABCD')
-        assert pm._id == '0123456789A'
+        pm = io.PathManager('N1628676218_16.IMG')
+        assert pm._id == 'N1628676218'
 
     def test_basepath(self, pm):
         assert pm.basepath == Path('/abc/db/N1234')
 
     def test_version(self, dbroot):
-        pm = io.PathManager('N1234567890_1')
-        assert pm.version == '1'
+        pm = io.PathManager('N1628676218_16')
+        assert pm.version == '16'
 
     def test_cubepath(self, pm):
         assert isinstance(pm.cubepath, Path)
