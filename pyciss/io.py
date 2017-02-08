@@ -201,7 +201,7 @@ class PathManager(object):
     def set_version(self):
         id_ = Path(self.input_img_id).name
         if len(id_) > 11:
-            self.version = id_[12]
+            self.version = id_.split('_')[1].split('.')[0]
         else:
             # if the given id was without version, check if a raw file is in database:
             try:
