@@ -81,7 +81,12 @@ def calibrate_ciss(img_name, ringdata=True, map_project=True, do_dstripe=True):
                                   '.cal.cub',
                                   '.cal.dst.cub',
                                   '.cal.dst.map.cub'])
-    ciss2isis(from_=img_name, to=cub_name)
+    try:
+        ciss2isis(from_=img_name, to=cub_name)
+    except ProcessError as e:
+        print("STDOUT:", e.stdout)
+        print("STDERR:", e.stderr)
+        return
     logger.info("Import to ISIS done.")
     targetname = getkey(from_=cub_name,
                         grp='instrument',
