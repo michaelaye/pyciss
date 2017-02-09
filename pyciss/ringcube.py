@@ -4,13 +4,15 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
+from skimage import exposure
+from pathlib import Path
 
 from pysis import CubeFile
 
+from ._utils import which_epi_janus_resonance
 from .io import PathManager
 from .meta import get_all_resonances, get_meta_df
 from .opusapi import MetaData
-from ._utils import which_epi_janus_resonance
 
 try:
     # prettier plots with seaborn
@@ -42,9 +44,13 @@ def calc_4_3(width):
 class RingCube(CubeFile):
 
     def __init__(self, fname, **kwargs):
-        fname = str(fname)
-        super().__init__(fname, **kwargs)
+        p = Path(fname)
         self.pm = PathManager(fname)
+        if not p.is_absolute():
+            # assuming it's an image_id and user wants default action:
+            fname = str(self.pm.cubepath)
+        # if fname is absolute path, open exactly that one:
+        super().__init__(str(fname), **kwargs)
         try:
             self.meta = meta_df.loc[self.pm.img_id]
         except KeyError:
@@ -123,13 +129,15 @@ class RingCube(CubeFile):
 
     def imshow(self, data=None, plow=1, phigh=99, save=False, ax=None, fig=None,
                interpolation='sinc', extra_title=None, show_resonances='some',
-               set_extent=True, **kwargs):
+               set_extent=True, equalized=False, rmin=None, rmax=None, **kwargs):
         """Powerful default display.
 
         show_resonances can be True, a list, 'all', or 'some'
         """
         if data is None:
             data = self.img
+        if equalized:
+            data = exposure.equalize_hist(np.nan_to_num(data))
         extent_val = self.extent if set_extent else None
         min_, max_ = np.percentile(data[~np.isnan(data)], (plow, phigh))
         self.min_ = min_
@@ -142,6 +150,8 @@ class RingCube(CubeFile):
         im = ax.imshow(data, extent=extent_val, cmap='gray', vmin=min_,
                        vmax=max_, interpolation=interpolation, origin='lower',
                        aspect='auto', **kwargs)
+        if any([rmin is not None, rmax is not None]):
+            ax.set_ylim(rmin, rmax)
         self.mpl_im = im
         ax.set_xlabel('Longitude [deg]')
         ax.set_ylabel('Radius [Mm]')
@@ -156,7 +166,7 @@ class RingCube(CubeFile):
             title += ', ' + extra_title
         ax.set_title(title, fontsize=14)
         if show_resonances:
-            self.set_resonance_axis(ax, show_resonances)
+            self.set_resonance_axis(ax, show_resonances, rmin, rmax)
         fig.tight_layout()
         if save:
             savename = self.plotfname
@@ -164,9 +174,17 @@ class RingCube(CubeFile):
                 savename = savename[:-4] + '_' + extra_title + '.png'
             fig.savefig(savename, dpi=150)
 
-    def set_resonance_axis(self, ax, show_resonances):
-        filter1 = (resonances['radius'] > (self.minrad_km))
-        filter2 = (resonances['radius'] < (self.maxrad_km))
+    @property
+    def inside_resonances(self):
+        lower_filter = (resonances['radius'] > (self.minrad_km))
+        higher_filter = (resonances['radius'] < (self.maxrad_km))
+        return resonances[lower_filter & higher_filter]
+
+    @property
+    def janus_swap_phase(self):
+        return which_epi_janus_resonance('janus', self.imagetime)
+
+    def set_resonance_axis(self, ax, show_resonances, rmin=None, rmax=None):
         if show_resonances == 'some':
             show_resonances = ['janus', 'prometheus', 'epimetheus']
         # check for janus/epimetheus year and copy over items
@@ -179,17 +197,19 @@ class RingCube(CubeFile):
             else:
                 moons.append(moon)
         try:
-            filter3 = (resonances.moon.isin(moons))
+            moonfilter = (self.inside_resonances.moon.isin(moons))
         except TypeError:
             # if show_resonances not a list, do nothing, == 'all'
-            filter3 = True
-        newticks = resonances[filter1 & filter2 & filter3]
+            moonfilter = True
+        newticks = self.inside_resonances[moonfilter]
         ax2 = ax.twinx()
         ax2.set_ybound(self.minrad.value, self.maxrad.value)
         ax2.ticklabel_format(useOffset=False)
         # i plot in Mm, hence the division by 1000 here.
         ax2.set_yticks(newticks.radius / 1000)
         ax2.set_yticklabels(newticks.name)
+        if any([rmin is not None, rmax is not None]):
+            ax2.set_ylim(rmin, rmax)
         self.resonance_axis = ax2
 
     @property
