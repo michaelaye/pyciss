@@ -7,6 +7,7 @@ from ipywidgets import fixed, interact
 
 from ._utils import which_epi_janus_resonance
 from .meta import get_all_resonances
+from .ringcube import RingCube
 
 resonance_table = get_all_resonances()
 
@@ -77,7 +78,7 @@ def get_res_radius_from_res_name(res_name, cube):
 
 def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
                  draw_prediction=True, soliton_controls_radius=False,
-                 saveroot=None):
+                 saveroot=None, ifmin=None, ifmax=None, rmin=None, rmax=None):
     if ax is None:
         # fig, ax = plt.subplots(figsize=(12, 9), nrows=2)
         fig, ax = plt.subplots(nrows=2)
@@ -127,6 +128,9 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
             tempax.set_ybound(radius_low.value, radius_high.value)
         if soliton_ax:
             soliton_ax.set_ybound(radius_low.value, radius_high.value)
+    elif any([rmin is not None, rmax is not None]):
+        for tempax in [ax[0], cube.resonance_axis]:
+            tempax.set_ybound(rmin, rmax)
     else:
         # the min/max image radii otherwise control the plot in cube.imshow()
         # so set the soliton display axis to the same values
@@ -135,6 +139,8 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     ax[1].plot(np.linspace(*cube.extent[2:], cube.img.shape[0]),
                np.nanmedian(cube.img, axis=1),
                color='white', lw=1)
+    if any([ifmin is not None, ifmax is not None]):
+        ax[1].set_ylim(ifmin, ifmax)
 
     ticks = []
     names = []
@@ -154,6 +160,8 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
 
     if soliton_controls_radius:
         ax[1].set_xlim(radius_low.value, radius_high.value)
+    elif any([rmin is not None, rmax is not None]):
+        ax[1].set_xlim(rmin, rmax)
     else:
         ax[1].set_xlim(cube.minrad.value, cube.maxrad.value)
 
@@ -164,3 +172,65 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
         root.mkdir(exist_ok=True)
         savepath = root / savepath
     fig.savefig(str(savepath), dpi=100)
+
+
+def resonance_plot(img_id, ax=None,
+                   saveroot=None, ifmin=None, ifmax=None, rmin=None, rmax=None):
+    cube = RingCube(img_id)
+    if ax is None:
+        # fig, ax = plt.subplots(figsize=(12, 9), nrows=2)
+        fig, ax = plt.subplots(nrows=2)
+    else:
+        fig = ax.get_figure()
+
+    cube.imshow(show_resonances=['janus'], ax=ax[0], fig=fig,
+                set_extent=True)
+
+    # soliton name and value, only using first found soliton
+    # TODO: create function that deals with more than one soliton
+    row_filter = cube.inside_resonances.moon == cube.janus_swap_phase
+    cols = ['radius', 'reson']
+    res_radius, res_name = cube.inside_resonances.loc[row_filter, cols].squeeze()
+    res_radius *= u.km
+    ax[0].axhline(y=res_radius.to('Mm').value, alpha=0.5,
+                  color='cyan', linestyle='dotted', lw=3,
+                  xmin=0.75, xmax=1.0)
+
+    if any([rmin is not None, rmax is not None]):
+        radius_low = rmin
+        radius_high = rmax
+    else:
+        radius_low = (res_radius - 20 * u.km).to(u.Mm)
+        radius_high = radius_low + 200 * u.km
+    for tempax in [ax[0], cube.resonance_axis]:
+        tempax.set_ybound(radius_low.value, radius_high.value)
+
+    ifs = np.nanmedian(cube.img, axis=1)
+    ifs = np.nan_to_num(ifs)
+    ifs[ifs < 0] = 0
+    ax[1].plot(np.linspace(*cube.extent[2:], cube.img.shape[0]),
+               ifs, color='white', lw=1)
+    if any([ifmin is not None, ifmax is not None]):
+        iflow = ifmin
+        ifhigh = ifmax
+    else:
+        iflow, ifhigh = np.percentile(ifs[~np.isnan(ifs)], (0.5, 99.5))
+    ax[1].set_ylim(iflow / 1.1, ifhigh * 1.1)
+
+    ax[1].axvline(x=res_radius.to('Mm').value, alpha=0.5, color='cyan',
+                  linestyle='dotted', lw=3)
+    ax[1].set_axis_bgcolor('black')
+    ax[1].set_title('Longitude-median profile over radius')
+    ax[1].set_xlabel('Radius [Mm]')
+    ax[1].set_ylabel('I/F')
+
+    ax[1].set_xlim(radius_low.value, radius_high.value)
+
+    fig.tight_layout()
+    if saveroot is not None:
+        savepath = "{}_{}.png".format(cube.pm.img_id, '_'.join(res_name.split()))
+        root = Path(saveroot)
+        root.mkdir(exist_ok=True)
+        savepath = root / savepath
+        fig.savefig(str(savepath), dpi=100)
+    return fig
