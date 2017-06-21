@@ -18,7 +18,7 @@ Contents:
    :maxdepth: 2
 
    tutorial
-   source/modules
+   modules
    examples.ipynb
 
 Indices and tables
