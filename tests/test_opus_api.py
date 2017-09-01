@@ -22,7 +22,7 @@ def test_query(opus_naked):
 
 
 def test_query_results(opus):
-    baseurl = 'http://pds-rings.seti.org/volumes/COISS_2xxx/COISS_2069/data/'
+    baseurl = 'https://pds-rings.seti.org/volumes/COISS_2xxx/COISS_2069/data/'
     res = baseurl + '1695427520_1695761375/N1695760475_1.LBL'
     assert opus.obsids[0].raw.label_url == res
 
