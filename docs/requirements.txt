@@ -1,3 +1,4 @@
 sphinxcontrib-bibtex
 Pillow
 nbsphinx
+jupyter_client
