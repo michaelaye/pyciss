@@ -21,7 +21,7 @@ except ImportError:
     from urllib import urlretrieve, urlencode
 
 base_url = 'http://tools.pds-rings.seti.org/opus/api'
-metadata_url = base_url + '/metadata/'
+metadata_url = base_url + '/metadata'
 image_url = base_url + '/image/'
 
 
@@ -35,12 +35,16 @@ class MetaData(object):
 
     """
 
-    def __init__(self, img_id):
+    def __init__(self, img_id, query=None):
         self.img_id = img_id
         urlname = "S_IMG_CO_ISS_{}_{}.json".format(img_id[1:], img_id[0])
-        fullurl = metadata_url + urlname
+        fullurl = "{}/{}".format(metadata_url, urlname)
         print("Requesting", fullurl)
-        self.r = requests.get(fullurl).json()
+        if query is not None:
+            query = unquote(urlencode(query))
+            self.r = requests.get(fullurl, params=query).json()
+        else:
+            self.r = requests.get(fullurl).json()
 
     @property
     def image(self):
@@ -224,6 +228,11 @@ class OPUS(object):
     def create_images_request(self, query, size='thumb', fmt='html'):
         self.create_request_with_query('images', query, size=size, fmt=fmt)
 
+    def get_volume_id(self, ring_obsid):
+        url = "{}/{}.json".format(metadata_url, ring_obsid)
+        query = {'cols': 'volumeidlist'}
+        r = requests.get(url, params=unquote(urlencode(query)))
+        return r.json()[0]['volume_id_list']
     # def create_data_request(self, query, fmt='json'):
     #     myquery = query.copy()
     #     myquery.update(query)
@@ -340,7 +349,10 @@ class OPUS(object):
                 basename = Path(url).name
                 print("Downloading", basename)
                 store_path = str(pm.basepath / basename)
-                urlretrieve(url, store_path)
+                try:
+                    urlretrieve(url, store_path)
+                except Exception as e:
+                    urlretrieve(url.replace('https', 'http'), store_path)
             return str(pm.basepath)
 
     def download_previews(self, savedir=None):
