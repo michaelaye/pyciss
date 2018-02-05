@@ -137,7 +137,7 @@ class PathManager(object):
     raw_image
     raw_cub
     raw_label
-    cube_path
+    cubepath
     tif
     undestriped
     """
