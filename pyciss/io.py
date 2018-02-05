@@ -1,21 +1,19 @@
 """This module manages where downloaded data is stored via a config
 file. It also has a PathManager to support finding the paths to files
 of interest."""
+import configparser
+import logging
+from collections import OrderedDict
 from pathlib import Path
 
 import pandas as pd
-import configparser
 
-from collections import OrderedDict
+logger = logging.getLogger(__name__)
 
 try:
     from pysis.isis import getkey
 except ImportError:
-    print("Cannot import ISIS system.")
-
-
-def get_oldconfigpath():
-    return Path.home() / '.pyciss.yaml'
+    logging.warning("Cannot import ISIS system.")
 
 
 def get_configpath():
@@ -39,28 +37,10 @@ def get_config():
         return config
 
 
-def transfer_config():
-    oldconfigpath = get_oldconfigpath()
-    configpath = get_configpath()
-    with oldconfigpath.open() as f:
-        yaml_config = f.readlines()
-    # clean up and break up into tokens
-    name, value = [i.strip() for i in yaml_config[0].split(': ')]
-    # create new configparser
-    config = configparser.ConfigParser()
-    config['pyciss_db'] = {}
-    config['pyciss_db']['path'] = value
-    with configpath.open('w') as configfile:
-        config.write(configfile)
-    oldconfigpath.unlink()
-
-
 # some root level code for config
-oldconfigpath = get_oldconfigpath()
 configpath = get_configpath()
-if oldconfigpath.exists() and not configpath.exists():
-    transfer_config()
-elif not configpath.exists():
+
+if not configpath.exists():
     print("No configuration file {} found.\n".format(configpath))
     print("Please run `pyciss.io.set_database_path()` and provide the path where\n"
           "you want to keep your automatically downloaded images.")
@@ -72,9 +52,6 @@ else:
 
 def set_database_path(dbfolder):
     """Use to write the database path into the config.
-
-    Using the socket module to determine the host/node name and
-    creating a new section in the config file.
 
     Parameters
     ----------
@@ -232,6 +209,8 @@ class PathManager(object):
             setattr(self, k, path)
 
     def __str__(self):
+        self.set_version()
+        self.set_attributes()  # in case there were changes
         s = ''
         for k, v in self.extensions.items():
             s += "{}: ".format(k)
