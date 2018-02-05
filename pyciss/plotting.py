@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -8,6 +9,9 @@ from ipywidgets import fixed, interact
 from ._utils import which_epi_janus_resonance
 from .meta import get_all_resonances
 from .ringcube import RingCube
+
+
+logger = logging.getLogger(__name__)
 
 resonance_table = get_all_resonances()
 
@@ -174,36 +178,42 @@ def soliton_plot(cube, solitons, ax=None, solitoncolor='red', resonances=None,
     fig.savefig(str(savepath), dpi=100)
 
 
-def resonance_plot(img_id, ax=None,
+def resonance_plot(img_id, ax=None, cube=None,
                    saveroot=None, ifmin=None, ifmax=None, rmin=None, rmax=None):
-    cube = RingCube(img_id)
+    if cube is None:
+        cube = RingCube(img_id)
     if ax is None:
-        # fig, ax = plt.subplots(figsize=(12, 9), nrows=2)
         fig, ax = plt.subplots(nrows=2)
     else:
-        fig = ax.get_figure()
+        fig = ax[0].get_figure()
 
-    cube.imshow(show_resonances=['janus'], ax=ax[0], fig=fig,
-                set_extent=True)
+    for axes in fig.axes:
+        if axes not in ax:
+            axes.remove()
+
+    cube.imshow(show_resonances=['janus'], ax=ax[0], set_extent=True)
 
     # soliton name and value, only using first found soliton
     # TODO: create function that deals with more than one soliton
     row_filter = cube.inside_resonances.moon == cube.janus_swap_phase
-    cols = ['radius', 'reson']
-    res_radius, res_name = cube.inside_resonances.loc[row_filter, cols].squeeze()
-    res_radius *= u.km
-    ax[0].axhline(y=res_radius.to('Mm').value, alpha=0.5,
-                  color='cyan', linestyle='dotted', lw=3,
-                  xmin=0.75, xmax=1.0)
+    if any(row_filter):
+        cols = ['radius', 'reson']
+        res_radius, res_name = cube.inside_resonances.loc[row_filter, cols].squeeze()
+        res_radius *= u.km
+        ax[0].axhline(y=res_radius.to('Mm').value, alpha=0.5,
+                      color='cyan', linestyle='dotted', lw=3,
+                      xmin=0.75, xmax=1.0)
 
-    if any([rmin is not None, rmax is not None]):
-        radius_low = rmin
-        radius_high = rmax
+        if any([rmin is not None, rmax is not None]):
+            radius_low = rmin
+            radius_high = rmax
+        else:
+            radius_low = (res_radius - 20 * u.km).to(u.Mm)
+            radius_high = radius_low + 200 * u.km
+        for tempax in [ax[0], cube.resonance_axis]:
+            tempax.set_ybound(radius_low.value, radius_high.value)
     else:
-        radius_low = (res_radius - 20 * u.km).to(u.Mm)
-        radius_high = radius_low + 200 * u.km
-    for tempax in [ax[0], cube.resonance_axis]:
-        tempax.set_ybound(radius_low.value, radius_high.value)
+        res_name = 'no_janus_res'
 
     ifs = np.nanmedian(cube.img, axis=1)
     ifs = np.nan_to_num(ifs)
@@ -217,14 +227,14 @@ def resonance_plot(img_id, ax=None,
         iflow, ifhigh = np.percentile(ifs[~np.isnan(ifs)], (0.5, 99.5))
     ax[1].set_ylim(iflow / 1.1, ifhigh * 1.1)
 
-    ax[1].axvline(x=res_radius.to('Mm').value, alpha=0.5, color='cyan',
-                  linestyle='dotted', lw=3)
-    ax[1].set_axis_bgcolor('black')
+    if any(row_filter):
+        ax[1].axvline(x=res_radius.to('Mm').value, alpha=0.5, color='cyan',
+                      linestyle='dotted', lw=3)
+        ax[1].set_xlim(radius_low.value, radius_high.value)
+    ax[1].set_facecolor('black')
     ax[1].set_title('Longitude-median profile over radius')
     ax[1].set_xlabel('Radius [Mm]')
     ax[1].set_ylabel('I/F')
-
-    ax[1].set_xlim(radius_low.value, radius_high.value)
 
     fig.tight_layout()
     if saveroot is not None:
@@ -232,5 +242,5 @@ def resonance_plot(img_id, ax=None,
         root = Path(saveroot)
         root.mkdir(exist_ok=True)
         savepath = root / savepath
-        fig.savefig(str(savepath), dpi=100)
-    return fig
+        fig.savefig(str(savepath), dpi=200)
+    return fig, cube.resonance_axis
