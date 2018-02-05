@@ -14,7 +14,11 @@ def read_cumulative_iss_index():
         print("Did not find the key `[pyciss_index][path]` in the config file.")
         return
     path = indexdir / 'cumindex.tab.hdf'
-    df = pd.read_hdf(path, 'df')
+    try:
+        df = pd.read_hdf(path, 'df')
+    except FileNotFoundError:
+        path = indexdir / 'cumindex.hdf'
+        df = pd.read_hdf(path, 'df')
     # replace DPS Nan values (-1e32) with real NaNs
     return df.replace(-1.000000e+32, np.nan)
 
@@ -34,13 +38,26 @@ def read_ring_images_index():
     return meta[ringfilter]
 
 
-#
-# def
-#     else:
-#         df = index_to_df(indexdir / 'cumindex.tab')
-#         df.to_hdf(savepath, 'df')
-#         return df
-#
+def get_clearnacs_ring_images():
+    df = read_ring_images_index()
+    df[df == -1e32] = np.nan
+    df = df.set_index('isotime')
+    ringimages = df.query("RINGS_FLAG=='YES'")
+    ringimages = ringimages[ringimages.MAXIMUM_RING_RADIUS.notnull()]
+    ringimages = ringimages[ringimages.MINIMUM_RING_RADIUS.notnull()]
+    ringimages = ringimages.query('MAXIMUM_RING_RADIUS < 1e90 and MINIMUM_RING_RADIUS > 0')
+    nac = ringimages[ringimages.INSTRUMENT_ID == 'ISSNA']
+    clearnacs = nac.query('FILTER_NAME_1 == "CL1" and FILTER_NAME_2 == "CL2"')
+    return clearnacs
+
+
+def filter_for_ringspan(clearnacs, spanlimit):
+    "filter for covered ringspan, giver in km."
+    delta = clearnacs.MAXIMUM_RING_RADIUS - clearnacs.MINIMUM_RING_RADIUS
+    f = delta < spanlimit
+    ringspan = clearnacs[f].copy()
+    return ringspan
+
 
 class IndexDB(object):
     def __init__(self, indexdir=None):
