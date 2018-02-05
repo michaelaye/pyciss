@@ -3,10 +3,9 @@ from __future__ import division, print_function
 
 import logging
 import os
-from os.path import join as pjoin
 from pathlib import Path
 
-import numpy as np
+from . import io
 
 try:
     from pysis import IsisPool
@@ -18,8 +17,6 @@ except ImportError:
     print("Cannot load the ISIS system. pipeline module not functional.")
 else:
     ISISDATA = Path(os.environ['ISIS3DATA'])
-
-from . import io
 
 
 logger = logging.getLogger(__name__)
@@ -86,7 +83,7 @@ def calibrate_ciss(img_name, ringdata=True, map_project=True, do_dstripe=True):
     except ProcessError as e:
         print("STDOUT:", e.stdout)
         print("STDERR:", e.stderr)
-        return
+        return False
     logger.info("Import to ISIS done.")
     targetname = getkey(from_=cub_name,
                         grp='instrument',
@@ -103,11 +100,16 @@ def calibrate_ciss(img_name, ringdata=True, map_project=True, do_dstripe=True):
                 grpname='Instrument')
 
     # perform either normal spiceinit or one for ringdata
-    if ringdata is True:
-        spiceinit(from_=cub_name, cksmithed='yes', spksmithed='yes',
-                  shape='ringplane')
-    else:
-        spiceinit(from_=cub_name, cksmithed='yes', spksmithed='yes')
+    try:
+        if ringdata is True:
+            spiceinit(from_=cub_name, cksmithed='yes', spksmithed='yes',
+                      shape='ringplane')
+        else:
+            spiceinit(from_=cub_name, cksmithed='yes', spksmithed='yes')
+    except ProcessError as e:
+        print('STDOUT', e.stdout)
+        print("STDERR:", e.stderr)
+        return e
     logger.info("spiceinit done.")
 
     # calibration
@@ -159,22 +161,35 @@ class Calibrator(object):
         Switch to tell the Calibrator if its dealing with ringdata.
         If True, it will check the label for the correct target (required for correct
         spiceinit and map projection) and will control spice
-
-    Returns
-    -------
-    str : absolute path to last produced ISIS cube in pipeline.
+    do_map_project : bool
+        Switch to control if map projection into ringplane shall occur
+    do_dstripe : True
+        Switch to control if dstripe filter should be applied.
+        If the original obseration was nearly parallel to ring-plane, then the filter tries to
+        remove resonance waves in the rings which leads to highly distorted images.
+        In these cases one needs to leave out the destriping.
+    final_resolution : int
+        The map projection radial resolution value to achieve, in units meter per pixel.
+        If not given, an automatic value is being calculated by the ISIS software.
+        This often leads to higher res images than originally performed, using cubic spline
+        interpolation.
+        They look good, but one must be aware of this for interpretation.
+        I usually take a median on all original resolutions
+        of my dataset and set it to that value.
 
     """
     map_path = ISISDATA / 'base/templates/maps/ringcylindrical.map'
 
-    def __init__(self, img_name, is_ring_data=True, do_map_project=True, do_dstripe=True):
+    def __init__(self, img_name, is_ring_data=True, do_map_project=True, do_dstripe=True,
+                 final_resolution=500):
         self.img_name = self.parse_img_name(img_name)
         self.is_ring_data = is_ring_data
         self.do_map_project = do_map_project
         self.do_dstripe = do_dstripe
+        self.final_resolution = final_resolution
 
+    def standard_calib(self):
         pm = self.pm  # save typing
-
         # import PDS into ISIS
         ciss2isis(from_=pm.raw_label, to=pm.raw_cub)
         logger.info("Import to ISIS done.")
@@ -191,22 +206,27 @@ class Calibrator(object):
         end = pm.cal_cub  # keep track of last produced path
 
         # destriping
-        if do_dstripe:
+        if self.do_dstripe:
             dstripe(from_=pm.cal_cub, to=pm.dst_cub, mode='horizontal')
             logger.info('Destriping done.')
             end = pm.dst_cub
         else:
             logger.warning("Destriping skipped, as requested.")
 
-        if do_map_project:
-            if do_dstripe:
+        if self.do_map_project:
+            if self.do_dstripe:
                 start = pm.dst_cub
                 end = pm.cubepath
             else:
                 start = pm.cal_cub
                 end = pm.undestriped
-            ringscam2map(from_=start, to=end, defaultrange='Camera',
-                         map=self.map_path)
+            try:
+                ringscam2map(from_=start, to=end, defaultrange='Camera',
+                             map=self.map_path, pixres='mpp',
+                             resolution=self.final_resolution)
+            except ProcessError as e:
+                print("STDOUT:", e.stdout)
+                print("STDERR:", e.stderr)
         else:
             logger.warning("Map projection was skipped.\n"
                            "Set map_project to True if wanted.")
@@ -267,13 +287,15 @@ class Calibrator(object):
                 # PathManager can deal with absolute paths
                 self.pm = io.PathManager(img_name)
 
-
-def remapping(img_name):
-    (cal_name, map_name) = file_variations(img_name,
-                                           ['.cal.cub', '.map.cal.cub'])
-    print("Mapping", cal_name, "to", map_name)
-    mapfname = pjoin(io.HOME, 'data', 'ciss', 'opus', 'ringcylindrical.map')
-    ringscam2map(from_=cal_name, to=map_name, map=mapfname, pixres='map')
+    def remapping(self, output, resolution=500):
+        input_ = self.pm.dst_cub if self.pm.dst_cub.exists() else self.pm.cal_cub
+        if not Path(output).is_absolute():
+            output = input_.with_name(output)
+        logger.info("Mapping %s to %s to resolution %i", input_, output, resolution)
+        ringscam2map(from_=input_, to=output, map=self.map_path, pixres='mpp',
+                     defaultrange='Camera', resolution=resolution)
+        tifname = output.with_suffix('.tif')
+        isis2std(from_=output, to=tifname, format='tiff')
 
 
 def calibrate_many(images):
@@ -286,9 +308,3 @@ def calibrate_many(images):
             isis_pool.ciss2isis(from_=img_name, to=cub_name)
 
     return images
-
-
-def remove_mean_value(data, axis=1):
-    mean_value = np.nanmean(data, axis=axis)
-    subtracted = data - mean_value[:, np.newaxis]
-    return subtracted
