@@ -1,11 +1,12 @@
 """RingCube class definition"""
+import logging
 import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
 from skimage import exposure
-from pathlib import Path
 
 from pysis import CubeFile
 
@@ -23,6 +24,8 @@ except ImportError:
 else:
     sns.set_context('notebook')
     sns.set_style('white')
+
+logger = logging.getLogger(__name__)
 
 resonances = get_all_resonances()
 meta_df = get_meta_df()
@@ -43,18 +46,24 @@ def calc_4_3(width):
 
 class RingCube(CubeFile):
 
-    def __init__(self, fname, **kwargs):
+    def __init__(self, fname, plot_limits=(1, 99), **kwargs):
         p = Path(fname)
         self.pm = PathManager(fname)
         if not p.is_absolute():
             # assuming it's an image_id and user wants default action:
-            fname = str(self.pm.cubepath)
+            if self.pm.cubepath.exists():
+                fname = str(self.pm.cubepath)
+            else:
+                fname = str(self.pm.undestriped)
         # if fname is absolute path, open exactly that one:
         super().__init__(str(fname), **kwargs)
         try:
             self.meta = meta_df.loc[self.pm.img_id]
         except KeyError:
             self.meta = None
+        self.resonance_axis = None
+        self.pmin = plot_limits[0]
+        self.pmax = plot_limits[1]
 
     def get_opus_meta_data(self):
         print("Getting metadata from the online OPUS database.")
@@ -88,6 +97,10 @@ class RingCube(CubeFile):
     @property
     def minrad_km(self):
         return self.minrad.to(u.km)
+
+    @property
+    def midrad(self):
+        return (self.minrad + self.maxrad) / 2
 
     @property
     def maxrad(self):
@@ -127,8 +140,13 @@ class RingCube(CubeFile):
     def plotfname(self):
         return self.filename.split('.')[0] + '.png'
 
-    def imshow(self, data=None, plow=1, phigh=99, save=False, ax=None, fig=None,
-               interpolation='sinc', extra_title=None, show_resonances='some',
+    @property
+    def plot_limits(self):
+        data = self.img
+        return np.percentile(data[~np.isnan(data)], (self.pmin, self.pmax))
+
+    def imshow(self, data=None, plow=1, phigh=99, save=False, ax=None,
+               interpolation='none', extra_title=None, show_resonances='some',
                set_extent=True, equalized=False, rmin=None, rmax=None, **kwargs):
         """Powerful default display.
 
@@ -136,6 +154,9 @@ class RingCube(CubeFile):
         """
         if data is None:
             data = self.img
+        if self.resonance_axis is not None:
+            logger.debug('removing resonance_axis')
+            self.resonance_axis.remove()
         if equalized:
             data = exposure.equalize_hist(np.nan_to_num(data))
         extent_val = self.extent if set_extent else None
@@ -147,6 +168,8 @@ class RingCube(CubeFile):
                 fig, ax = plt.subplots(figsize=calc_4_3(8))
             else:
                 fig, ax = plt.subplots()
+        else:
+            fig = ax.get_figure()
         im = ax.imshow(data, extent=extent_val, cmap='gray', vmin=min_,
                        vmax=max_, interpolation=interpolation, origin='lower',
                        aspect='auto', **kwargs)
