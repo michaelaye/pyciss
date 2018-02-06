@@ -11,7 +11,8 @@ def read_cumulative_iss_index():
     try:
         indexdir = Path(config['pyciss_index']['path'])
     except KeyError:
-        print("Did not find the key `[pyciss_index][path]` in the config file.")
+        print(
+            "Did not find the key `[pyciss_index][path]` in the config file.")
         return
     path = indexdir / 'cumindex.tab.hdf'
     try:
@@ -19,7 +20,7 @@ def read_cumulative_iss_index():
     except FileNotFoundError:
         path = indexdir / 'cumindex.hdf'
         df = pd.read_hdf(path, 'df')
-    # replace DPS Nan values (-1e32) with real NaNs
+    # replace PDS Nan values (-1e32) with real NaNs
     return df.replace(-1.000000e+32, np.nan)
 
 
@@ -45,7 +46,8 @@ def get_clearnacs_ring_images():
     ringimages = df.query("RINGS_FLAG=='YES'")
     ringimages = ringimages[ringimages.MAXIMUM_RING_RADIUS.notnull()]
     ringimages = ringimages[ringimages.MINIMUM_RING_RADIUS.notnull()]
-    ringimages = ringimages.query('MAXIMUM_RING_RADIUS < 1e90 and MINIMUM_RING_RADIUS > 0')
+    ringimages = ringimages.query(
+        'MAXIMUM_RING_RADIUS < 1e90 and MINIMUM_RING_RADIUS > 0')
     nac = ringimages[ringimages.INSTRUMENT_ID == 'ISSNA']
     clearnacs = nac.query('FILTER_NAME_1 == "CL1" and FILTER_NAME_2 == "CL2"')
     return clearnacs
