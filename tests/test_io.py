@@ -24,12 +24,6 @@ def mockreturn():
     return Path('/abc')
 
 
-def test_get_oldconfigpath(monkeypatch):
-    monkeypatch.setattr(Path, 'home', mockreturn)
-    x = io.get_oldconfigpath()
-    assert x == Path('/abc/.pyciss.yaml')
-
-
 def test_get_configpath(monkeypatch):
     monkeypatch.setattr(Path, 'home', mockreturn)
     x = io.get_configpath()
