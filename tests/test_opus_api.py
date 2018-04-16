@@ -21,12 +21,6 @@ def test_query(opus_naked):
     assert type(opus_naked.obsids[0] is pyciss.opusapi.OPUSObsID)
 
 
-def test_query_results(opus):
-    baseurl = 'https://pds-rings.seti.org/volumes/COISS_2xxx/COISS_2069/data/'
-    res = baseurl + '1695427520_1695761375/N1695760475_1.LBL'
-    assert opus.obsids[0].raw.label_url == res
-
-
 def test_download_results(opus, tmpdir):
     opus.download_results(savedir=str(tmpdir))
     assert (tmpdir / 'N1695760475' / 'N1695760475_1.IMG').exists()
