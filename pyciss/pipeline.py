@@ -81,6 +81,7 @@ def calibrate_ciss(img_name, ringdata=True, map_project=True, do_dstripe=True):
     try:
         ciss2isis(from_=img_name, to=cub_name)
     except ProcessError as e:
+        print("Error at `ciss2isis`:")
         print("STDOUT:", e.stdout)
         print("STDERR:", e.stderr)
         return False
@@ -133,7 +134,8 @@ def calibrate_ciss(img_name, ringdata=True, map_project=True, do_dstripe=True):
     else:
         isis2std(from_=next_, to=next_[:-3] + 'tif', format='tiff',
                  minpercent=0, maxpercent=100)
-        logger.warning('Map projection was skipped, set map_project to True if wanted.')
+        logger.warning(
+            'Map projection was skipped, set map_project to True if wanted.')
     return
 
 
@@ -291,7 +293,8 @@ class Calibrator(object):
         input_ = self.pm.dst_cub if self.pm.dst_cub.exists() else self.pm.cal_cub
         if not Path(output).is_absolute():
             output = input_.with_name(output)
-        logger.info("Mapping %s to %s to resolution %i", input_, output, resolution)
+        logger.info("Mapping %s to %s to resolution %i",
+                    input_, output, resolution)
         ringscam2map(from_=input_, to=output, map=self.map_path, pixres='mpp',
                      defaultrange='Camera', resolution=resolution)
         tifname = output.with_suffix('.tif')

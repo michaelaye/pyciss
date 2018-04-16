@@ -85,6 +85,6 @@ def download_and_calibrate(img_id=None, overwrite=False, **kwargs):
             logger.warning("Cube exists but overwrite is not allowed.")
             return
     else:
-        logger.info("Cubefile ")
+        logger.info("Launching calibrate_ciss")
         ret = pipeline.calibrate_ciss(pm, **kwargs)
     return ret
