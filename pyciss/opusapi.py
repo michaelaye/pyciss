@@ -20,7 +20,7 @@ except ImportError:
     from urlparse import urlparse
     from urllib import urlretrieve, urlencode
 
-base_url = 'http://tools.pds-rings.seti.org/opus/api'
+base_url = 'https://tools.pds-rings.seti.org/opus/api'
 metadata_url = base_url + '/metadata'
 image_url = base_url + '/image/'
 
