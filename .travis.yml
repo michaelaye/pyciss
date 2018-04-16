@@ -21,10 +21,8 @@ install:
   # now my stuff
   - conda create -q -n test-environment python=3 --file conda_requirements.txt
   - source activate test-environment
-  - conda install pytest
-  - pip install coveralls
   - pip install pysis
-  - pip install pytest-ipynb
+  # - pip install pytest-ipynb
   - python setup.py install
 
 # command to run tests, e.g. python setup.py test
