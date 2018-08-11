@@ -6,6 +6,7 @@ import time
 from ipyparallel import Client
 
 from . import io, opusapi, pipeline
+# from . import pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,8 @@ def download_and_calibrate_parallel(list_of_ids, n=None):
     subprocess.Popen(["ipcluster", "stop", "--quiet"])
 
 
-def download_and_calibrate(img_id=None, overwrite=False, **kwargs):
+def download_and_calibrate(img_id=None, overwrite=False,
+                           recalibrate=False, **kwargs):
     """Download and calibrate one or more image ids, in parallel.
 
     Parameters
@@ -73,18 +75,14 @@ def download_and_calibrate(img_id=None, overwrite=False, **kwargs):
 
     # if pm.raw_image is already there, skip downloading.
     if not pm.raw_image.exists() or overwrite is True:
-        logger.debug("Downloading file", pm.img_id)
+        logger.debug("Downloading file %s" % pm.img_id)
         download_file_id(pm.img_id)
+        pm = io.PathManager(img_id)  # refresh, to get proper PDS version id.
 
     # start the calibration pipeline.
     # if cube file exists skip calibration if not overwrite
-    if pm.cubepath.exists():
-        if overwrite is True:
-            ret = pipeline.calibrate_ciss(pm, **kwargs)
-        else:
-            logger.warning("Cube exists but overwrite is not allowed.")
-            return
+    if not pm.cubepath.exists() or recalibrate is True:
+        calib = pipeline.Calibrator(img_id, **kwargs)
+        calib.standard_calib()
     else:
-        logger.info("Launching calibrate_ciss")
-        ret = pipeline.calibrate_ciss(pm, **kwargs)
-    return ret
+        logger.warning("Cube exists but overwrite is not allowed.")

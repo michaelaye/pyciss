@@ -193,8 +193,15 @@ class Calibrator(object):
     def standard_calib(self):
         pm = self.pm  # save typing
         # import PDS into ISIS
-        ciss2isis(from_=pm.raw_label, to=pm.raw_cub)
-        logger.info("Import to ISIS done.")
+        try:
+            ciss2isis(from_=pm.raw_label, to=pm.raw_cub)
+        except ProcessError as e:
+            print("At Calibrator.standard_calib()'s ciss2isis:")
+            print("ERR:", e.stderr)
+            print(f"Parameters:\n{pm.raw_label}\n{pm.raw_cub}")
+            raise e
+        else:
+            logger.info("Import to ISIS done.")
 
         # check if label fits with data
         self.check_label()
@@ -289,9 +296,11 @@ class Calibrator(object):
                 # PathManager can deal with absolute paths
                 self.pm = io.PathManager(img_name)
 
-    def remapping(self, output, resolution=500):
+    def remapping(self, output=None, resolution=500):
         input_ = self.pm.dst_cub if self.pm.dst_cub.exists() else self.pm.cal_cub
-        if not Path(output).is_absolute():
+        if output is None:
+            output = self.pm.cubepath
+        elif not Path(output).is_absolute():
             output = input_.with_name(output)
         logger.info("Mapping %s to %s to resolution %i",
                     input_, output, resolution)
