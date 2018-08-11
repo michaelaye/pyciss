@@ -27,3 +27,8 @@ def which_epi_janus_resonance(name, time):
         return name + '2'
     else:
         return name + '1'
+
+
+def filename_from_obsid(obsid):
+    tokens = obsid.split('_')
+    return f"{tokens[-1]}{tokens[-2]}"
