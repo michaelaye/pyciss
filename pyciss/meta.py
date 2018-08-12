@@ -2,25 +2,32 @@
 
 It defines the location of ring resonances for the RingCube plotting.
 """
+from pathlib import Path
+
+import numpy as np
 import pandas as pd
 import pkg_resources as pr
 
+from .io import config
+
 
 def get_meta_df():
-    def read_metadata(f):
-        df = pd.read_csv(f, header=None, delim_whitespace=True)
-        df = df.rename(columns={0: 'id', 1: 'pixres', 14: 'lit_status'})
-        df = df.set_index('id')
-        df['is_lit'] = df.lit_status is True
-        # df.drop('lit_status', axis=1)
-        return df
-
-    with pr.resource_stream('pyciss', 'data/metadata.txt') as f:
-        meta_df = read_metadata(f)
-    return meta_df
-
+    "Read in the whole cumulative index and return dataframe."
+    try:
+        indexdir = Path(config['pyciss_index']['path'])
+    except KeyError:
+        print(
+            "Did not find the key `[pyciss_index][path]` in the config file.")
+        return
+    path = indexdir / 'ring_summary_index.hdf'
+    df = pd.read_hdf(path, 'df')
+    # replace PDS Nan values (-1e32) with real NaNs
+    df = df.replace(-1.000000e+32, np.nan)
+    return df.replace(-999.0, np.nan)
 
 # resonances
+
+
 def get_order(name):
     ratio = name.split()[1]
     a, b = ratio.split(':')
@@ -40,8 +47,10 @@ def get_prime_resonances():
     resonances = get_resonances()
     prime_resonances = resonances[resonances.order == 1].drop('order', axis=1)
     # filter out Janus and Epimetheus as we have a more precise file for that.
-    prime_resonances = prime_resonances.loc[~prime_resonances.name.str.startswith('Janus')]
-    prime_resonances = prime_resonances.loc[~prime_resonances.name.str.startswith('Epimetheus')]
+    prime_resonances = prime_resonances.loc[~prime_resonances.name.str.startswith(
+        'Janus')]
+    prime_resonances = prime_resonances.loc[~prime_resonances.name.str.startswith(
+        'Epimetheus')]
     return prime_resonances
 
 
@@ -65,7 +74,8 @@ def get_janus_epimetheus_resonances():
     jan_epi_resonances.columns = ['moon', 'reson', 'radius']
 
     # calculate order from resonance name
-    jan_epi_resonances['order'] = jan_epi_resonances.reson.map(get_janos_epi_order)
+    jan_epi_resonances['order'] = jan_epi_resonances.reson.map(
+        get_janos_epi_order)
 
     def func(x):
         "Remove space from resonce string"
@@ -90,7 +100,9 @@ def get_prime_jan_epi():
 def get_all_resonances():
     prime_resonances = get_prime_resonances()
     prime_jan_epis = get_prime_jan_epi()
-    all_resonances = pd.concat([prime_resonances, prime_jan_epis])
+    all_resonances = pd.concat([prime_resonances, prime_jan_epis],
+                               ignore_index=True, sort=False)
     all_resonances.sort_values(by='radius', inplace=True)
-    all_resonances['moon'] = all_resonances.name.map(lambda x: x.split()[0].lower())
+    all_resonances['moon'] = all_resonances.name.map(
+        lambda x: x.split()[0].lower())
     return all_resonances
