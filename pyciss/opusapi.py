@@ -1,5 +1,5 @@
 """This module is making use of the
-`OPUS API <http://pds-rings-tools.seti.org/opus/api/>`_ to create web requests
+`OPUS API <https://pds-rings-tools.seti.org/opus/api/>`_ to create web requests
 for OPUS data, metadata, and preview images.
 """
 from __future__ import division, print_function
@@ -23,6 +23,11 @@ except ImportError:
 base_url = 'https://tools.pds-rings.seti.org/opus/api'
 metadata_url = base_url + '/metadata'
 image_url = base_url + '/image/'
+
+dic = {
+    'raw_data': "Raw Data",
+    'calibrated_data': "Calibrated Data",
+}
 
 
 class MetaData(object):
@@ -121,11 +126,11 @@ class OPUSObsID(object):
 
     def __init__(self, obsid_data):
         self.idname = obsid_data[0]
-        self.raw = OPUSImageURL(obsid_data[1]['RAW_IMAGE'])
+        self.raw = OPUSImageURL(obsid_data[1][dic['raw_data']])
         # the images have an iteration number. I'm fishing it out here:
         self.number = self.raw.image_url.split('_')[-1][0]
         try:
-            self.calib = OPUSImageURL(obsid_data[1]['CALIBRATED'])
+            self.calib = OPUSImageURL(obsid_data[1][dic['calibrated_data']])
         except KeyError:
             self.calib = None
 
@@ -148,8 +153,8 @@ class OPUSObsID(object):
     @property
     def img_id(self):
         """Convert OPUS ObsID into the more known image_id."""
-        tokens = self.idname.split('_')
-        return ''.join(tokens[-2:][::-1])
+        tokens = self.idname.split('-')
+        return tokens[-1]
 
     @property
     def small_img_url(self):
@@ -219,6 +224,7 @@ class OPUS(object):
             url = "{}/{}.{}".format(base_url, kind, fmt)
         elif kind == 'images':
             url = "{}/images/{}.{}".format(base_url, size, fmt)
+        self.url = url
         self.r = requests.get(url,
                               params=unquote(urlencode(query)))
 
