@@ -3,17 +3,28 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from ._utils import which_epi_janus_resonance
 from .io import config
+from .meta import get_all_resonances
+
+resonances = get_all_resonances()
 
 
-def read_cumulative_iss_index():
-    "Read in the whole cumulative index and return dataframe."
+def get_index_dir():
     try:
         indexdir = Path(config['pyciss_index']['path'])
     except KeyError:
         print(
             "Did not find the key `[pyciss_index][path]` in the config file.")
-        return
+        return None
+    else:
+        return indexdir
+
+
+def read_cumulative_iss_index():
+    "Read in the whole cumulative index and return dataframe."
+    indexdir = get_index_dir()
+
     path = indexdir / 'cumindex.tab.hdf'
     try:
         df = pd.read_hdf(path, 'df')
@@ -22,6 +33,25 @@ def read_cumulative_iss_index():
         df = pd.read_hdf(path, 'df')
     # replace PDS Nan values (-1e32) with real NaNs
     return df.replace(-1.000000e+32, np.nan)
+
+
+def ring_summary_index():
+    indexdir = get_index_dir()
+
+    path = indexdir / 'ring_summary_index.hdf'
+    try:
+        df = pd.read_hdf(path, 'df')
+    except FileNotFoundError:
+        print("File not found.")
+        return
+    else:
+        df = df.replace(-1.00000e+32, np.nan)
+
+        def stripper(x):
+            return Path(x).stem + ".IMG"
+
+        # return df.assign(FILE_NAME=df.FILE_SPECIFICATION_NAME.map(stripper))
+        return df
 
 
 def read_ring_images_index():
@@ -61,23 +91,27 @@ def filter_for_ringspan(clearnacs, spanlimit):
     return ringspan
 
 
-class IndexDB(object):
-    def __init__(self, indexdir=None):
-        if indexdir is None:
-            try:
-                indexdir = config['pyciss_index']['path']
-            except KeyError:
-                print("Did not find the key `pyciss_indexdir` in the config file.")
-                return
-        self.indexdir = Path(indexdir)
+def get_resonances_inside_radius(row):
+    minrad = row['MINIMUM_RING_RADIUS']
+    maxrad = row['MAXIMUM_RING_RADIUS']
+    lower_filter = (resonances['radius'] > (minrad))
+    higher_filter = (resonances['radius'] < (maxrad))
+    insides = resonances[lower_filter & higher_filter]
+    return insides
 
-    @property
-    def indexfiles(self):
-        return self.indexdir.glob('*_????.tab')
 
-    @property
-    def cumulative_label(self):
-        return IndexLabel(self.indexdir / 'cumindex.lbl')
+def check_for_resonance(row, as_bool=True):
+    insides = get_resonances_inside_radius(row)
+    return bool(len(insides)) if as_bool else len(insides)
 
-    def get_index_no(self, no):
-        return iss_index_to_df(next(self.indexdir.glob('*_' + str(no) + '.tab')))
+
+def check_for_janus_resonance(row, as_bool=True):
+    insides = get_resonances_inside_radius(row)
+    # row.name is the index of the row, which is a time!
+    janus = which_epi_janus_resonance('janus', row.name)
+    moonfilter = insides.moon == janus
+    return bool(len(insides[moonfilter]))
+
+
+def get_janus_phase(time):
+    return which_epi_janus_resonance('janus', time)
