@@ -74,14 +74,14 @@ class RingCube(CubeFile):
     @property
     def meta_pixres(self):
         if self.meta is not None:
-            return int(self.meta.pixres * 1000)
+            return int(self.meta.mean_radial_res * 1000)
         else:
             return np.nan
 
     @property
     def meta_litstatus(self):
         if self.meta is not None:
-            return self.meta.lit_status.upper()
+            return self.meta.is_lit
         else:
             return np.nan
 
@@ -134,7 +134,7 @@ class RingCube(CubeFile):
 
     @property
     def plottitle(self):
-        return os.path.basename(self.filename).split('.')[0]
+        return Path(self.filename).stem.split('.')[0]
 
     @property
     def plotfname(self):
@@ -180,14 +180,10 @@ class RingCube(CubeFile):
         ax.set_ylabel('Radius [Mm]')
         ax.ticklabel_format(useOffset=False)
         # ax.grid('on')
-        title = ("{}, Metadata_Res: {} m/pix, {}, {}".format(
-                 self.plottitle,
-                 self.meta_pixres,
-                 self.imagetime.date().isoformat(),
-                 self.meta_litstatus))
+        title = self.plot_title
         if extra_title:
             title += ', ' + extra_title
-        ax.set_title(title, fontsize=14)
+        ax.set_title(title, fontsize=12)
         if show_resonances:
             self.set_resonance_axis(ax, show_resonances, rmin, rmax)
         fig.tight_layout()
@@ -196,6 +192,15 @@ class RingCube(CubeFile):
             if extra_title:
                 savename = savename[:-4] + '_' + extra_title + '.png'
             fig.savefig(savename, dpi=150)
+
+    @property
+    def plot_title(self):
+        title = ("{}, Res: {} m/pix, {}, LIT: {}".format(
+            self.plottitle,
+            self.meta_pixres,
+            self.imagetime.date().isoformat(),
+            self.meta_litstatus))
+        return title
 
     @property
     def inside_resonances(self):
@@ -209,7 +214,12 @@ class RingCube(CubeFile):
 
     def set_resonance_axis(self, ax, show_resonances, rmin=None, rmax=None):
         if show_resonances == 'some':
-            show_resonances = ['janus', 'prometheus', 'epimetheus']
+            show_resonances = ['janus', 'prometheus', 'epimetheus', 'atlas']
+        elif show_resonances == 'all':
+            show_resonances = self.inside_resonances.moon.unique()
+            show_resonances = [
+                i for i in show_resonances if i[:-1] not in ['janus', 'epimetheus']]
+            show_resonances.extend(['janus', 'epimetheus'])
         # check for janus/epimetheus year and copy over items
         # into final moons list
         moons = []
@@ -240,12 +250,24 @@ class RingCube(CubeFile):
         return np.nanmean(self.img, axis=1)
 
     @property
+    def median_profile(self):
+        return np.nanmedian(self.img, axis=1)
+
+    @property
     def density_wave_subtracted(self):
         subtracted = self.img - self.mean_profile[:, np.newaxis]
         return subtracted
 
-    def imshow_subtracted(self, **kwargs):
-        self.imshow(data=self.density_wave_subtracted, **kwargs)
+    @property
+    def density_wave_median_subtracted(self):
+        subtracted = self.img - self.median_profile[:, np.newaxis]
+        return subtracted
+
+    def imshow_subtracted(self, median=False, **kwargs):
+        if median:
+            self.imshow(data=self.density_wave_median_subtracted, **kwargs)
+        else:
+            self.imshow(data=self.density_wave_subtracted, **kwargs)
 
     @property
     def imgmin(self):
