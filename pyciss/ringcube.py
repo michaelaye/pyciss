@@ -1,6 +1,7 @@
 """RingCube class definition"""
 import logging
 import os
+import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -46,12 +47,12 @@ def calc_4_3(width):
 
 class RingCube(CubeFile):
 
-    def __init__(self, fname, plot_limits=(1, 99), **kwargs):
+    def __init__(self, fname, plot_limits=(1, 99), destriped=True, **kwargs):
         p = Path(fname)
         self.pm = PathManager(fname)
         if not p.is_absolute():
             # assuming it's an image_id and user wants default action:
-            if self.pm.cubepath.exists():
+            if self.pm.cubepath.exists() and destriped is True:
                 fname = str(self.pm.cubepath)
             else:
                 fname = str(self.pm.undestriped)
@@ -64,6 +65,7 @@ class RingCube(CubeFile):
         self.resonance_axis = None
         self.pmin = plot_limits[0]
         self.pmax = plot_limits[1]
+        self._plot_limits = self.calc_clim(self.img)
 
     def get_opus_meta_data(self):
         print("Getting metadata from the online OPUS database.")
@@ -140,12 +142,14 @@ class RingCube(CubeFile):
     def plotfname(self):
         return self.filename.split('.')[0] + '.png'
 
-    @property
-    def plot_limits(self):
-        data = self.img
+    def calc_clim(self, data):
         return np.percentile(data[~np.isnan(data)], (self.pmin, self.pmax))
 
-    def imshow(self, data=None, plow=1, phigh=99, save=False, ax=None,
+    @property
+    def plot_limits(self):
+        return self.calc_clim(self.plotted_data)
+
+    def imshow(self, data=None, save=False, ax=None,
                interpolation='none', extra_title=None, show_resonances='some',
                set_extent=True, equalized=False, rmin=None, rmax=None, **kwargs):
         """Powerful default display.
@@ -154,13 +158,14 @@ class RingCube(CubeFile):
         """
         if data is None:
             data = self.img
+        self.plotted_data = data
         if self.resonance_axis is not None:
             logger.debug('removing resonance_axis')
             self.resonance_axis.remove()
         if equalized:
             data = exposure.equalize_hist(np.nan_to_num(data))
         extent_val = self.extent if set_extent else None
-        min_, max_ = np.percentile(data[~np.isnan(data)], (plow, phigh))
+        min_, max_ = self.plot_limits
         self.min_ = min_
         self.max_ = max_
         if ax is None:
@@ -192,6 +197,8 @@ class RingCube(CubeFile):
             if extra_title:
                 savename = savename[:-4] + '_' + extra_title + '.png'
             fig.savefig(savename, dpi=150)
+        self.im = im
+        return im
 
     @property
     def plot_title(self):
@@ -255,12 +262,16 @@ class RingCube(CubeFile):
 
     @property
     def density_wave_subtracted(self):
-        subtracted = self.img - self.mean_profile[:, np.newaxis]
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', r'All-NaN slice encountered')
+            subtracted = self.img - self.mean_profile[:, np.newaxis]
         return subtracted
 
     @property
     def density_wave_median_subtracted(self):
-        subtracted = self.img - self.median_profile[:, np.newaxis]
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', r'All-NaN slice encountered')
+            subtracted = self.img - self.median_profile[:, np.newaxis]
         return subtracted
 
     def imshow_subtracted(self, median=False, **kwargs):
