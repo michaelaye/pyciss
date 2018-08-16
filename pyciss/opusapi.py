@@ -39,6 +39,15 @@ class MetaData(object):
         In the form of {'N','W'}0123456789, the image id used in science publications
 
     """
+    attr_dic = {
+        'image': 'Image Constraints',
+        'wavelength': 'Wavelength Constraints',
+        'surface_geom': 'Saturn Surface Geometry',
+        'mission': 'Cassini Mission Constraints',
+        'ring_geom': 'Ring Geometry Constraints',
+        'general': 'General Constraints',
+        'iss': 'Cassini ISS Constraints',
+    }
 
     def __init__(self, img_id, query=None):
         self.img_id = img_id
@@ -51,41 +60,11 @@ class MetaData(object):
         else:
             self.r = requests.get(fullurl).json()
 
-    @property
-    def image(self):
-        """dict: image constraints dictionary of the metadata"""
-        return self.r['Image Constraints']
+        # setting attributes to access data quicker:
+        for key, val in self.attr_dic:
+            setattr(self, key, self.r[val])
 
-    @property
-    def wavelength(self):
-        """dict: wavelength constraints dictionary of the metadata"""
-        return self.r['Wavelength Constraints']
-
-    @property
-    def surface_geom(self):
-        """dict: Saturn surface geometry dictionary of the metadata"""
-        return self.r['Saturn Surface Geometry']
-
-    @property
-    def mission(self):
-        """dict: Mission related metadata dictionary"""
-        return self.r['Cassini Mission Constraints']
-
-    @property
-    def ring_geom(self):
-        """dict: Ring geometry metadata dictionary"""
-        return self.r['Ring Geometry Constraints']
-
-    @property
-    def general(self):
-        """dict: general metadata dictionary"""
-        return self.r['General Constraints']
-
-    @property
-    def iss(self):
-        """dict: ISS instrument related metadata dictionary"""
-        return self.r['Cassini ISS Constraints']
-
+    # this property access the
     @property
     def target_name(self):
         """str: Intended target name for the current ISS observation"""
