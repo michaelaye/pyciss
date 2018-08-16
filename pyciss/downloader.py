@@ -73,16 +73,12 @@ def download_and_calibrate(img_id=None, overwrite=False,
         logger.debug('Creating Pathmanager object')
         pm = io.PathManager(img_id)
 
-    # if pm.raw_image is already there, skip downloading.
     if not pm.raw_image.exists() or overwrite is True:
         logger.debug("Downloading file %s" % pm.img_id)
         download_file_id(pm.img_id)
         pm = io.PathManager(img_id)  # refresh, to get proper PDS version id.
-
-    # start the calibration pipeline.
-    # if cube file exists skip calibration if not overwrite
-    if not pm.cubepath.exists() or recalibrate is True:
-        calib = pipeline.Calibrator(img_id, **kwargs)
-        calib.standard_calib()
     else:
-        logger.warning("Cube exists but overwrite is not allowed.")
+        logger.info("Found ")
+
+    calib = pipeline.Calibrator(img_id, overwrite=overwrite, **kwargs)
+    calib.standard_calib()

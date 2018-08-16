@@ -22,127 +22,8 @@ else:
 logger = logging.getLogger(__name__)
 
 
-def calib_to_isis(pm_or_path):
-    try:
-        img_name = str(pm_or_path.calib_label)
-    except AttributeError:
-        img_name = str(pm_or_path)
-    (cub_name,) = file_variations(img_name, ['.cub'])
-    try:
-        ciss2isis(from_=img_name, to=cub_name)
-    except ProcessError as e:
-        print("STDOUT:", e.stdout)
-        print("STDERR:", e.stderr)
-        return
-    return cub_name
-
-
-def calibrate_ciss(img_name, ringdata=True, map_project=True, do_dstripe=True):
-    """
-    Calibrate raw Cassini ISS images using ISIS.
-
-    ISIS is using an official released version the calibration routine `cisscal`
-    that is being developed under IDL, but has been converted to C++ for ISIS.
-    I am using the pipeline as described here:
-    https://isis.astrogeology.usgs.gov/IsisWorkshop/index.php/Working_with_Cassini_ISS_Data
-    It is customary to indicate the pipeline of ISIS apps that a file went through
-    with a chain of extensions, e.g. '.cal.dst.map.cub', indicating calibration, destriping,
-    and map projection.
-
-    Parameters
-    ----------
-    img_name : io.PathManager, pathlib.Path, str
-        Absolute path to image or io.PathManager object with raw_label attribute.
-        If img_name has no attribute `raw_label`, I try to initialize a PathManager
-        with `img_name` to see if I have received an image_id string here.
-        Last thing I try is just a path.
-
-    Returns
-    -------
-    str : absolute path to map-projected ISIS cube.
-    """
-    # Check if img_name is maybe a PathManager object with a `raw_label` attribute:
-    try:
-        img_name = str(img_name.raw_label)
-    except AttributeError:
-        try:
-            pm = io.PathManager(img_name)
-            img_name = str(pm.raw_label)
-        except:
-            img_name = str(img_name)
-    (cub_name,
-     cal_name,
-     dst_name,
-     map_name) = file_variations(img_name,
-                                 ['.cub',
-                                  '.cal.cub',
-                                  '.cal.dst.cub',
-                                  '.cal.dst.map.cub'])
-    try:
-        ciss2isis(from_=img_name, to=cub_name)
-    except ProcessError as e:
-        print("Error at `ciss2isis`:")
-        print("STDOUT:", e.stdout)
-        print("STDERR:", e.stderr)
-        return False
-    logger.info("Import to ISIS done.")
-    targetname = getkey(from_=cub_name,
-                        grp='instrument',
-                        keyword='targetname')
-
-    # forcing the target name to Saturn here, because some observations of
-    # the rings have moons as a target, but then the standard map projection
-    # onto the Saturn ring plane fails.
-    # see also
-    # https://isis.astrogeology.usgs.gov/IsisSupport/index.php/topic,3922.0.html
-    if targetname.lower() != 'saturn':
-        editlab(from_=cub_name, options='modkey',
-                keyword='TargetName', value='Saturn',
-                grpname='Instrument')
-
-    # perform either normal spiceinit or one for ringdata
-    try:
-        if ringdata is True:
-            spiceinit(from_=cub_name, cksmithed='yes', spksmithed='yes',
-                      shape='ringplane')
-        else:
-            spiceinit(from_=cub_name, cksmithed='yes', spksmithed='yes')
-    except ProcessError as e:
-        print('STDOUT', e.stdout)
-        print("STDERR:", e.stderr)
-        return e
-    logger.info("spiceinit done.")
-
-    # calibration
-    cisscal(from_=cub_name, to=cal_name, units='I/F')
-    logger.info('cisscal done.')
-
-    # destriping
-    if do_dstripe:
-        dstripe(from_=cal_name, to=dst_name, mode='horizontal')
-        logger.info('Destriping done.')
-        next_ = dst_name
-    else:
-        next_ = cal_name
-
-    # map projection
-    if map_project:
-        ringscam2map(from_=next_, to=map_name, defaultrange='Camera',
-                     map=ISISDATA / 'base/templates/maps/ringcylindrical.map')
-        isis2std(from_=map_name, to=map_name[:-3] + 'tif', format='tiff')
-        logger.info('Map projecting done. Function finished.')
-    else:
-        isis2std(from_=next_, to=next_[:-3] + 'tif', format='tiff',
-                 minpercent=0, maxpercent=100)
-        logger.warning(
-            'Map projection was skipped, set map_project to True if wanted.')
-    return
-
-
 class Calibrator(object):
     """Calibrate raw Cassini ISS images using ISIS.
-
-    This is a cleaner reimplementation of the calibrate_ciss function.
 
     ISIS is using an official released version the calibration routine `cisscal`
     that is being developed under IDL, but has been converted to C++ for ISIS.
@@ -165,11 +46,6 @@ class Calibrator(object):
         spiceinit and map projection) and will control spice
     do_map_project : bool
         Switch to control if map projection into ringplane shall occur
-    do_dstripe : True
-        Switch to control if dstripe filter should be applied.
-        If the original obseration was nearly parallel to ring-plane, then the filter tries to
-        remove resonance waves in the rings which leads to highly distorted images.
-        In these cases one needs to leave out the destriping.
     final_resolution : int
         The map projection radial resolution value to achieve, in units meter per pixel.
         If not given, an automatic value is being calculated by the ISIS software.
@@ -182,12 +58,11 @@ class Calibrator(object):
     """
     map_path = ISISDATA / 'base/templates/maps/ringcylindrical.map'
 
-    def __init__(self, img_name, is_ring_data=True, do_map_project=True, do_dstripe=True,
+    def __init__(self, img_name, is_ring_data=True, do_map_project=True,
                  final_resolution=500):
         self.img_name = self.parse_img_name(img_name)
         self.is_ring_data = is_ring_data
         self.do_map_project = do_map_project
-        self.do_dstripe = do_dstripe
         self.final_resolution = final_resolution
 
     def standard_calib(self):
@@ -215,35 +90,34 @@ class Calibrator(object):
         end = pm.cal_cub  # keep track of last produced path
 
         # destriping
-        if self.do_dstripe:
-            dstripe(from_=pm.cal_cub, to=pm.dst_cub, mode='horizontal')
-            logger.info('Destriping done.')
-            end = pm.dst_cub
-        else:
-            logger.warning("Destriping skipped, as requested.")
+        dstripe(from_=pm.cal_cub, to=pm.dst_cub, mode='horizontal')
+        logger.info('Destriping done.')
 
         if self.do_map_project:
-            if self.do_dstripe:
-                start = pm.dst_cub
-                end = pm.cubepath
-            else:
-                start = pm.cal_cub
-                end = pm.undestriped
-            try:
-                ringscam2map(from_=start, to=end, defaultrange='Camera',
-                             map=self.map_path, pixres='mpp',
-                             resolution=self.final_resolution)
-            except ProcessError as e:
-                print("STDOUT:", e.stdout)
-                print("STDERR:", e.stderr)
+            # destriped
+            self.map_project(pm.dst_cub, pm.cubepath)
+            self.create_preview(pm.cubepath)
+            # undestriped
+            self.map_project(pm.cal_cub, pm.undestriped)
+            self.create_preview(pm.undestriped)
         else:
             logger.warning("Map projection was skipped.\n"
                            "Set map_project to True if wanted.")
 
+    def map_project(self, start, end):
+        try:
+            ringscam2map(from_=start, to=end, defaultrange='Camera',
+                         map=self.map_path, pixres='mpp',
+                         resolution=self.final_resolution)
+        except ProcessError as e:
+            print("STDOUT:", e.stdout)
+            print("STDERR:", e.stderr)
+
+    def create_preview(self, end):
         # create tif quickview
         tifname = end.with_suffix('.tif')
         isis2std(from_=end, to=tifname, format='tiff')
-        logger.info("Created tif from last product: %s", tifname)
+        logger.info("Created tif product: %s", tifname)
 
     def spiceinit(self):
         """Perform either normal spiceinit or one for ringdata.
