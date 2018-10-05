@@ -59,13 +59,13 @@ class RingCube(CubeFile):
         # if fname is absolute path, open exactly that one:
         super().__init__(str(fname), **kwargs)
         try:
-            self.meta = meta_df.loc[self.pm.img_id]
+            q = f"file_id == '{self.pm.img_id}'"
+            self.meta = meta_df.query(q)
         except KeyError:
             self.meta = None
         self.resonance_axis = None
         self.pmin = plot_limits[0]
         self.pmax = plot_limits[1]
-        self._plot_limits = self.calc_clim(self.img)
 
     def get_opus_meta_data(self):
         print("Getting metadata from the online OPUS database.")
