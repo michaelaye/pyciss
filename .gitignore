@@ -62,3 +62,5 @@ docs/*build*
 
 .DS_store
 
+
+\.vscode/
