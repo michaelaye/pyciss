@@ -313,7 +313,7 @@ class OPUS(object):
                               .format(width, s) for s in img_urls])
         display(HTML(imagesList))
 
-    def download_results(self, savedir=None, only_raw=True, only_calib=False,
+    def download_results(self, savedir=None, raw=True, calib=False,
                          index=None):
         """Download the previously found and stored Opus obsids.
 
@@ -327,12 +327,11 @@ class OPUS(object):
         for obsid in obsids:
             pm = io.PathManager(obsid.img_id, savedir=savedir)
             pm.basepath.mkdir(exist_ok=True)
-            if only_raw is True:
-                to_download = obsid.raw_urls
-            elif only_calib is True:
-                to_download = obsid.calib_urls
-            else:
-                to_download = obsid.all_urls
+            to_download = []
+            if raw is True:
+                to_download.extend(obsid.raw_urls)
+            if calib is True:
+                to_download.extend(obsid.calib_urls)
             for url in to_download:
                 basename = Path(url).name
                 print("Downloading", basename)
