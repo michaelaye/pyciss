@@ -54,8 +54,7 @@ def download_and_calibrate_parallel(list_of_ids, n=None):
     subprocess.Popen(["ipcluster", "stop", "--quiet"])
 
 
-def download_and_calibrate(img_id=None, overwrite=False,
-                           recalibrate=False, **kwargs):
+def download_and_calibrate(img_id=None, overwrite=False, recalibrate=False, **kwargs):
     """Download and calibrate one or more image ids, in parallel.
 
     Parameters
@@ -80,5 +79,5 @@ def download_and_calibrate(img_id=None, overwrite=False,
     else:
         logger.info("Found ")
 
-    calib = pipeline.Calibrator(img_id, overwrite=overwrite, **kwargs)
+    calib = pipeline.Calibrator(img_id, **kwargs)
     calib.standard_calib()
