@@ -223,15 +223,18 @@ class OPUS(object):
     #     myquery.update(query)
     #     self.create_request_with_query('data', myquery, fmt=fmt)
 
+    @property
+    def response(self):
+        return self.r.json()['data']
+
     def unpack_json_response(self):
         if self.r.status_code == 500:
             if not self.silent:
                 print("No data found.")
             self.obsids = []
             return
-        response = self.r.json()['data']
         obsids = []
-        for obsid_data in response.items():
+        for obsid_data in self.response.items():
             obsids.append(OPUSObsID(obsid_data))
         self.obsids = obsids
         if not self.silent:
