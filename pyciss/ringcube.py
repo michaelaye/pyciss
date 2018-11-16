@@ -83,7 +83,7 @@ class RingCube(CubeFile):
     @property
     def meta_litstatus(self):
         if self.meta is not None:
-            return self.meta.is_lit
+            return self.meta.squeeze().at['is_lit']
         else:
             return np.nan
 
@@ -135,7 +135,7 @@ class RingCube(CubeFile):
         return self.mapping_label['PixelResolution'].value * u.m / u.pixel
 
     @property
-    def plottitle(self):
+    def image_id(self):
         return Path(self.filename).stem.split('.')[0]
 
     @property
@@ -203,7 +203,7 @@ class RingCube(CubeFile):
     @property
     def plot_title(self):
         title = ("{}, Res: {} m/pix, {}, LIT: {}".format(
-            self.plottitle,
+            self.image_id,
             self.meta_pixres,
             self.imagetime.date().isoformat(),
             self.meta_litstatus))
