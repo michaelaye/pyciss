@@ -198,7 +198,8 @@ def resonance_plot(img_id, ax=None, cube=None,
     row_filter = cube.inside_resonances.moon == cube.janus_swap_phase
     if any(row_filter):
         cols = ['radius', 'reson']
-        res_radius, res_name = cube.inside_resonances.loc[row_filter, cols].squeeze()
+        res_radius, res_name = cube.inside_resonances.loc[row_filter, cols].squeeze(
+        )
         res_radius *= u.km
         ax[0].axhline(y=res_radius.to('Mm').value, alpha=0.5,
                       color='cyan', linestyle='dotted', lw=3,
@@ -238,9 +239,11 @@ def resonance_plot(img_id, ax=None, cube=None,
 
     fig.tight_layout()
     if saveroot is not None:
-        savepath = "{}_{}.png".format(cube.pm.img_id, '_'.join(res_name.split()))
+        savepath = f"{cube.pm.img_id}_{res_name.replace(':', '_')}.png"
         root = Path(saveroot)
         root.mkdir(exist_ok=True)
         savepath = root / savepath
+        print(savepath)
+        logger.info("Saving file at %s", str(savepath))
         fig.savefig(str(savepath), dpi=200)
     return fig, cube.resonance_axis
