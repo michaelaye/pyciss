@@ -76,7 +76,7 @@ class RingCube(CubeFile):
     @property
     def meta_pixres(self):
         if self.meta is not None:
-            return int(self.meta.mean_radial_res * 1000)
+            return int(self.meta.mean_radial_res * 1000) * u.m / u.pix
         else:
             return np.nan
 
