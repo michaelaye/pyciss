@@ -83,7 +83,8 @@ class RingCube(CubeFile):
     @property
     def meta_litstatus(self):
         if self.meta is not None:
-            return self.meta.squeeze().at['is_lit']
+            emang = self.meta.filter(regex='RING_EMISSION_ANGLE').mean(axis=1)
+            return "LIT" if emang.iat[0] < 90.0 else "UNLIT"
         else:
             return np.nan
 
@@ -151,7 +152,8 @@ class RingCube(CubeFile):
 
     def imshow(self, data=None, save=False, ax=None,
                interpolation='none', extra_title=None, show_resonances='some',
-               set_extent=True, equalized=False, rmin=None, rmax=None, **kwargs):
+               set_extent=True, equalized=False, rmin=None, rmax=None,
+               savepath='.', **kwargs):
         """Powerful default display.
 
         show_resonances can be True, a list, 'all', or 'some'
@@ -196,17 +198,21 @@ class RingCube(CubeFile):
             savename = self.plotfname
             if extra_title:
                 savename = savename[:-4] + '_' + extra_title + '.png'
-            fig.savefig(savename, dpi=150)
+            p = Path(savename)
+            fullpath = Path(savepath) / p.name
+            fig.savefig(fullpath, dpi=150)
+            logging.info("Created %s", fullpath)
         self.im = im
         return im
 
     @property
     def plot_title(self):
-        title = ("{}, Res: {} m/pix, {}, LIT: {}".format(
-            self.image_id,
-            self.meta_pixres,
-            self.imagetime.date().isoformat(),
-            self.meta_litstatus))
+        lit = {True: "LIT", False: "UNLIT"}
+        title = (
+            f"{self.image_id}, {self.meta_pixres}, "
+            f"{self.imagetime.date().isoformat()}, "
+            f"{self.meta_litstatus}"
+        )
         return title
 
     @property
