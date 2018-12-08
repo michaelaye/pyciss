@@ -217,7 +217,6 @@ class RingCube(CubeFile):
         ax.set_title(title, fontsize=12)
         if show_resonances:
             self.set_resonance_axis(ax, show_resonances, rmin, rmax)
-        fig.tight_layout()
         if save:
             savename = self.plotfname
             if extra_title:
