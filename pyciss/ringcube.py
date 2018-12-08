@@ -4,8 +4,10 @@ import os
 import warnings
 from pathlib import Path
 
+import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
+import xarray as xr
 from astropy import units as u
 from skimage import exposure
 
@@ -144,11 +146,25 @@ class RingCube(CubeFile):
         return self.filename.split('.')[0] + '.png'
 
     def calc_clim(self, data):
+        from numpy import inf
+        if np.nanmin(data) == -inf:
+            data[data == -inf] = np.nan
+            data[data == inf] = np.nan
         return np.percentile(data[~np.isnan(data)], (self.pmin, self.pmax))
 
     @property
     def plot_limits(self):
         return self.calc_clim(self.plotted_data)
+
+    def to_xarray(self):
+        radii = np.linspace(self.minrad, self.maxrad, self.img.shape[0])
+        azimuths = np.linspace(self.minlon, self.maxlon, self.img.shape[1])
+        data = xr.DataArray(
+            self.img,
+            coords={'radius': radii, 'azimuth': azimuths},
+            dims=('radius', 'azimuth'))
+        vmin, vmax = self.plot_limits
+        return data.where( (data > vmin) & (data < vmax) )
 
     def imshow(self, data=None, save=False, ax=None,
                interpolation='none', extra_title=None, show_resonances='some',
