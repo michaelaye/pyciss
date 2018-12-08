@@ -49,7 +49,7 @@ def calc_4_3(width):
 
 class RingCube(CubeFile):
 
-    def __init__(self, fname, plot_limits=(1, 99), destriped=True, **kwargs):
+    def __init__(self, fname, plot_limits=(0.1, 99), destriped=True, **kwargs):
         p = Path(fname)
         self.pm = PathManager(fname)
         if not p.is_absolute():
@@ -66,14 +66,22 @@ class RingCube(CubeFile):
         except KeyError:
             self.meta = None
         self.resonance_axis = None
-        self.pmin = plot_limits[0]
-        self.pmax = plot_limits[1]
+        self.pmin, self.pmax = plot_limits
+        self._plotted_data = None
 
     def get_opus_meta_data(self):
         print("Getting metadata from the online OPUS database.")
         self.opusmeta = MetaData(self.pm._id)
         print("Done.")
         return self.opusmeta
+
+    @property
+    def plotted_data(self):
+        return self.img if self._plotted_data is None else self._plotted_data
+
+    @plotted_data.setter
+    def plotted_data(self, value):
+        self._plotted_data = value
 
     @property
     def meta_pixres(self):
