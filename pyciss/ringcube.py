@@ -201,8 +201,9 @@ class RingCube(CubeFile):
                 fig, ax = plt.subplots()
         else:
             fig = ax.get_figure()
-        im = ax.imshow(data, extent=extent_val, cmap='gray', vmin=min_,
-                       vmax=max_, interpolation=interpolation, origin='lower',
+        im = ax.imshow(data, extent=extent_val, cmap='gray', 
+                       vmin=min_, vmax=max_,
+                       interpolation=interpolation, origin='lower',
                        aspect='auto', **kwargs)
         if any([rmin is not None, rmax is not None]):
             ax.set_ylim(rmin, rmax)
