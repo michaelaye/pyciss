@@ -25,8 +25,8 @@ metadata_url = base_url + '/metadata'
 image_url = base_url + '/image/'
 
 dic = {
-    'raw_data': "Raw Data",
-    'calibrated_data': "Calibrated Data",
+    'raw_data': "coiss-raw",
+    'calibrated_data': "coiss-calib",
 }
 
 
