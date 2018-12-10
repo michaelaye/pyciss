@@ -158,6 +158,7 @@ class PathManager(object):
     extensions = OrderedDict(sorted(d.items(), key=lambda t: t[0]))
 
     def __init__(self, img_id, savedir=None):
+        img_id = img_id.upper()
         self.input_img_id = img_id
         if Path(img_id).is_absolute():
             # the split is to remove the _1.IMG or _2.IMG from the path
