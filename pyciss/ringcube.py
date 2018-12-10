@@ -1,10 +1,8 @@
 """RingCube class definition"""
 import logging
-import os
 import warnings
 from pathlib import Path
 
-import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
@@ -14,24 +12,26 @@ from skimage import exposure
 from pysis import CubeFile
 
 from ._utils import which_epi_janus_resonance
+from .index import ring_summary_index
 from .io import PathManager
-from .meta import get_all_resonances, get_meta_df
+from .meta import get_all_resonances
 from .opusapi import MetaData
 
 try:
     # prettier plots with seaborn
     import seaborn as sns
+
     _SEABORN_INSTALLED = True
 except ImportError:
     _SEABORN_INSTALLED = False
 else:
-    sns.set_context('notebook')
-    sns.set_style('white')
+    sns.set_context("notebook")
+    sns.set_style("white")
 
 logger = logging.getLogger(__name__)
 
 resonances = get_all_resonances()
-meta_df = get_meta_df()
+meta_df = ring_summary_index()
 
 
 def calc_4_3(width):
@@ -48,7 +48,6 @@ def calc_4_3(width):
 
 
 class RingCube(CubeFile):
-
     def __init__(self, fname, plot_limits=(0.1, 99), destriped=True, **kwargs):
         p = Path(fname)
         self.pm = PathManager(fname)
@@ -93,19 +92,19 @@ class RingCube(CubeFile):
     @property
     def meta_litstatus(self):
         if self.meta is not None:
-            emang = self.meta.filter(regex='RING_EMISSION_ANGLE').mean(axis=1)
+            emang = self.meta.filter(regex="RING_EMISSION_ANGLE").mean(axis=1)
             return "LIT" if emang.iat[0] < 90.0 else "UNLIT"
         else:
             return np.nan
 
     @property
     def mapping_label(self):
-        return self.label['IsisCube']['Mapping']
+        return self.label["IsisCube"]["Mapping"]
 
     @property
     def minrad(self):
         "float: MinimumRingRadius in Mm."
-        return self.mapping_label['MinimumRingRadius'] / 1e6 * u.Mm
+        return self.mapping_label["MinimumRingRadius"] / 1e6 * u.Mm
 
     @property
     def minrad_km(self):
@@ -118,7 +117,7 @@ class RingCube(CubeFile):
     @property
     def maxrad(self):
         "float: MaxiumRingRadius in Mm."
-        return self.mapping_label['MaximumRingRadius'] / 1e6 * u.Mm
+        return self.mapping_label["MaximumRingRadius"] / 1e6 * u.Mm
 
     @property
     def maxrad_km(self):
@@ -126,11 +125,11 @@ class RingCube(CubeFile):
 
     @property
     def minlon(self):
-        return self.mapping_label['MinimumRingLongitude'] * u.degree
+        return self.mapping_label["MinimumRingLongitude"] * u.degree
 
     @property
     def maxlon(self):
-        return self.mapping_label['MaximumRingLongitude'] * u.degree
+        return self.mapping_label["MaximumRingLongitude"] * u.degree
 
     @property
     def img(self):
@@ -143,18 +142,19 @@ class RingCube(CubeFile):
 
     @property
     def resolution_val(self):
-        return self.mapping_label['PixelResolution'].value * u.m / u.pixel
+        return self.mapping_label["PixelResolution"].value * u.m / u.pixel
 
     @property
     def image_id(self):
-        return Path(self.filename).stem.split('.')[0]
+        return Path(self.filename).stem.split(".")[0]
 
     @property
     def plotfname(self):
-        return self.filename.split('.')[0] + '.png'
+        return self.filename.split(".")[0] + ".png"
 
     def calc_clim(self, data):
         from numpy import inf
+
         if np.nanmin(data) == -inf:
             data[data == -inf] = np.nan
             data[data == inf] = np.nan
@@ -169,15 +169,27 @@ class RingCube(CubeFile):
         azimuths = np.linspace(self.minlon, self.maxlon, self.img.shape[1])
         data = xr.DataArray(
             self.img,
-            coords={'radius': radii, 'azimuth': azimuths},
-            dims=('radius', 'azimuth'))
+            coords={"radius": radii, "azimuth": azimuths},
+            dims=("radius", "azimuth"),
+        )
         vmin, vmax = self.plot_limits
-        return data.where( (data > vmin) & (data < vmax) )
+        return data.where((data > vmin) & (data < vmax))
 
-    def imshow(self, data=None, save=False, ax=None,
-               interpolation='none', extra_title=None, show_resonances='some',
-               set_extent=True, equalized=False, rmin=None, rmax=None,
-               savepath='.', **kwargs):
+    def imshow(
+        self,
+        data=None,
+        save=False,
+        ax=None,
+        interpolation="none",
+        extra_title=None,
+        show_resonances="some",
+        set_extent=True,
+        equalized=False,
+        rmin=None,
+        rmax=None,
+        savepath=".",
+        **kwargs,
+    ):
         """Powerful default display.
 
         show_resonances can be True, a list, 'all', or 'some'
@@ -186,7 +198,7 @@ class RingCube(CubeFile):
             data = self.img
         self.plotted_data = data
         if self.resonance_axis is not None:
-            logger.debug('removing resonance_axis')
+            logger.debug("removing resonance_axis")
             self.resonance_axis.remove()
         if equalized:
             data = exposure.equalize_hist(np.nan_to_num(data))
@@ -201,27 +213,34 @@ class RingCube(CubeFile):
                 fig, ax = plt.subplots()
         else:
             fig = ax.get_figure()
-        im = ax.imshow(data, extent=extent_val, cmap='gray', 
-                       vmin=min_, vmax=max_,
-                       interpolation=interpolation, origin='lower',
-                       aspect='auto', **kwargs)
+        im = ax.imshow(
+            data,
+            extent=extent_val,
+            cmap="gray",
+            vmin=min_,
+            vmax=max_,
+            interpolation=interpolation,
+            origin="lower",
+            aspect="auto",
+            **kwargs,
+        )
         if any([rmin is not None, rmax is not None]):
             ax.set_ylim(rmin, rmax)
         self.mpl_im = im
-        ax.set_xlabel('Longitude [deg]')
-        ax.set_ylabel('Radius [Mm]')
+        ax.set_xlabel("Longitude [deg]")
+        ax.set_ylabel("Radius [Mm]")
         ax.ticklabel_format(useOffset=False)
         # ax.grid('on')
         title = self.plot_title
         if extra_title:
-            title += ', ' + extra_title
+            title += ", " + extra_title
         ax.set_title(title, fontsize=12)
         if show_resonances:
             self.set_resonance_axis(ax, show_resonances, rmin, rmax)
         if save:
             savename = self.plotfname
             if extra_title:
-                savename = savename[:-4] + '_' + extra_title + '.png'
+                savename = savename[:-4] + "_" + extra_title + ".png"
             p = Path(savename)
             fullpath = Path(savepath) / p.name
             fig.savefig(fullpath, dpi=150)
@@ -231,7 +250,6 @@ class RingCube(CubeFile):
 
     @property
     def plot_title(self):
-        lit = {True: "LIT", False: "UNLIT"}
         title = (
             f"{self.image_id}, {self.meta_pixres}, "
             f"{self.imagetime.date().isoformat()}, "
@@ -241,33 +259,33 @@ class RingCube(CubeFile):
 
     @property
     def inside_resonances(self):
-        lower_filter = (resonances['radius'] > (self.minrad_km))
-        higher_filter = (resonances['radius'] < (self.maxrad_km))
+        lower_filter = resonances["radius"] > (self.minrad_km)
+        higher_filter = resonances["radius"] < (self.maxrad_km)
         return resonances[lower_filter & higher_filter]
 
     @property
     def janus_swap_phase(self):
-        return which_epi_janus_resonance('janus', self.imagetime)
+        return which_epi_janus_resonance("janus", self.imagetime)
 
     def set_resonance_axis(self, ax, show_resonances, rmin=None, rmax=None):
-        if show_resonances == 'some':
-            show_resonances = ['janus', 'prometheus', 'epimetheus', 'atlas']
-        elif show_resonances == 'all':
+        if show_resonances == "some":
+            show_resonances = ["janus", "prometheus", "epimetheus", "atlas"]
+        elif show_resonances == "all":
             show_resonances = self.inside_resonances.moon.unique()
             show_resonances = [
-                i for i in show_resonances if i[:-1] not in ['janus', 'epimetheus']]
-            show_resonances.extend(['janus', 'epimetheus'])
+                i for i in show_resonances if i[:-1] not in ["janus", "epimetheus"]
+            ]
+            show_resonances.extend(["janus", "epimetheus"])
         # check for janus/epimetheus year and copy over items
         # into final moons list
         moons = []
         for moon in show_resonances:
-            if moon in ['janus', 'epimetheus']:
-                moons.append(which_epi_janus_resonance(moon,
-                                                       self.imagetime))
+            if moon in ["janus", "epimetheus"]:
+                moons.append(which_epi_janus_resonance(moon, self.imagetime))
             else:
                 moons.append(moon)
         try:
-            moonfilter = (self.inside_resonances.moon.isin(moons))
+            moonfilter = self.inside_resonances.moon.isin(moons)
         except TypeError:
             # if show_resonances not a list, do nothing, == 'all'
             moonfilter = True
@@ -293,14 +311,14 @@ class RingCube(CubeFile):
     @property
     def density_wave_subtracted(self):
         with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', r'All-NaN slice encountered')
+            warnings.filterwarnings("ignore", r"All-NaN slice encountered")
             subtracted = self.img - self.mean_profile[:, np.newaxis]
         return subtracted
 
     @property
     def density_wave_median_subtracted(self):
         with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', r'All-NaN slice encountered')
+            warnings.filterwarnings("ignore", r"All-NaN slice encountered")
             subtracted = self.img - self.median_profile[:, np.newaxis]
         return subtracted
 
@@ -335,4 +353,5 @@ class RingCube(CubeFile):
 
     @property
     def imagetime(self):
-        return self.label['IsisCube']['Instrument']['ImageTime']
+        return self.label["IsisCube"]["Instrument"]["ImageTime"]
+
