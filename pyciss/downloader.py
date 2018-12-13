@@ -6,7 +6,6 @@ import time
 from ipyparallel import Client
 
 from . import io, opusapi, pipeline
-# from . import pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +28,9 @@ def setup_cluster(n_cores=None):
         n_cores = multiprocessing.cpu_count() // 2
 
     signal.signal(signal.SIGINT, signal_handler)
-    subprocess.Popen(["ipcluster",
-                      "start",
-                      "--n=" + str(n_cores),
-                      "--daemonize",
-                      "--quiet"])
+    subprocess.Popen(
+        ["ipcluster", "start", "--n=" + str(n_cores), "--daemonize", "--quiet"]
+    )
     time.sleep(5)
 
 
@@ -69,7 +66,7 @@ def download_and_calibrate(img_id=None, overwrite=False, recalibrate=False, **kw
         pm = img_id
     else:
         # get a PathManager object that knows where your data is or should be
-        logger.debug('Creating Pathmanager object')
+        logger.debug("Creating Pathmanager object")
         pm = io.PathManager(img_id)
 
     if not pm.raw_image.exists() or overwrite is True:
@@ -79,5 +76,8 @@ def download_and_calibrate(img_id=None, overwrite=False, recalibrate=False, **kw
     else:
         logger.info("Found ")
 
-    calib = pipeline.Calibrator(img_id, **kwargs)
-    calib.standard_calib()
+    if not (pm.cubepath.exists() and pm.undestriped.exists()) or overwrite is True:
+        calib = pipeline.Calibrator(img_id, **kwargs)
+        calib.standard_calib()
+    else:
+        print("All files exist. Use overwrite=True to redownload and calibrate.")
