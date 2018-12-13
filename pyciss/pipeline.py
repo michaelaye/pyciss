@@ -10,13 +10,22 @@ from . import io
 try:
     from pysis import IsisPool
     from pysis.exceptions import ProcessError
-    from pysis.isis import (ciss2isis, cisscal, dstripe, editlab, getkey, isis2std,
-                            ringscam2map, spiceinit)
+    from pysis.isis import (
+        ciss2isis,
+        cisscal,
+        dstripe,
+        editlab,
+        getkey,
+        isis2std,
+        ringscam2map,
+        spiceinit,
+        fillgap,
+    )
     from pysis.util import file_variations
 except ImportError:
     print("Cannot load the ISIS system. pipeline module not functional.")
 else:
-    ISISDATA = Path(os.environ['ISIS3DATA'])
+    ISISDATA = Path(os.environ["ISIS3DATA"])
 
 
 logger = logging.getLogger(__name__)
@@ -56,10 +65,12 @@ class Calibrator(object):
         of my dataset and set it to that value.
 
     """
-    map_path = ISISDATA / 'base/templates/maps/ringcylindrical.map'
 
-    def __init__(self, img_name, is_ring_data=True, do_map_project=True,
-                 final_resolution=500):
+    map_path = ISISDATA / "base/templates/maps/ringcylindrical.map"
+
+    def __init__(
+        self, img_name, is_ring_data=True, do_map_project=True, final_resolution=500
+    ):
         self.img_name = self.parse_img_name(img_name)
         self.is_ring_data = is_ring_data
         self.do_map_project = do_map_project
@@ -69,7 +80,8 @@ class Calibrator(object):
         pm = self.pm  # save typing
         # import PDS into ISIS
         try:
-            ciss2isis(from_=pm.raw_label, to=pm.raw_cub)
+            # use temp file here for fillgap to go to
+            ciss2isis(from_=pm.raw_label, to="temp.cub")
         except ProcessError as e:
             print("At Calibrator.standard_calib()'s ciss2isis:")
             print("ERR:", e.stderr)
@@ -78,6 +90,8 @@ class Calibrator(object):
         else:
             logger.info("Import to ISIS done.")
 
+        # fill Hrs pixels from bad importer
+        fillgap(from_="temp.cub", to=pm.raw_cub, interp="akima")
         # check if label fits with data
         self.check_label()
 
@@ -85,13 +99,13 @@ class Calibrator(object):
         self.spiceinit()
 
         # calibration, use I/F as units
-        cisscal(from_=pm.raw_cub, to=pm.cal_cub, units='I/F')
-        logger.info('cisscal done.')
+        cisscal(from_=pm.raw_cub, to=pm.cal_cub, units="I/F")
+        logger.info("cisscal done.")
         end = pm.cal_cub  # keep track of last produced path
 
         # destriping
-        dstripe(from_=pm.cal_cub, to=pm.dst_cub, mode='horizontal')
-        logger.info('Destriping done.')
+        dstripe(from_=pm.cal_cub, to=pm.dst_cub, mode="horizontal")
+        logger.info("Destriping done.")
 
         if self.do_map_project:
             # destriped
@@ -101,22 +115,28 @@ class Calibrator(object):
             self.map_project(pm.cal_cub, pm.undestriped)
             self.create_preview(pm.undestriped)
         else:
-            logger.warning("Map projection was skipped.\n"
-                           "Set map_project to True if wanted.")
+            logger.warning(
+                "Map projection was skipped.\n" "Set map_project to True if wanted."
+            )
 
     def map_project(self, start, end):
         try:
-            ringscam2map(from_=start, to=end, defaultrange='Camera',
-                         map=self.map_path, pixres='mpp',
-                         resolution=self.final_resolution)
+            ringscam2map(
+                from_=start,
+                to=end,
+                defaultrange="Camera",
+                map=self.map_path,
+                pixres="mpp",
+                resolution=self.final_resolution,
+            )
         except ProcessError as e:
             print("STDOUT:", e.stdout)
             print("STDERR:", e.stderr)
 
     def create_preview(self, end):
         # create tif quickview
-        tifname = end.with_suffix('.tif')
-        isis2std(from_=end, to=tifname, format='tiff')
+        tifname = end.with_suffix(".tif")
+        isis2std(from_=end, to=tifname, format="tiff")
         logger.info("Created tif product: %s", tifname)
 
     def spiceinit(self):
@@ -126,9 +146,8 @@ class Calibrator(object):
         and the function with the same name. `spiceinit` from the outer
         namespace is the one imported from pysis.
         """
-        shape = 'ringplane' if self.is_ring_data else None
-        spiceinit(from_=self.pm.raw_cub, cksmithed='yes',
-                  spksmithed='yes', shape=shape)
+        shape = "ringplane" if self.is_ring_data else None
+        spiceinit(from_=self.pm.raw_cub, cksmithed="yes", spksmithed="yes", shape=shape)
         logger.info("spiceinit done.")
 
     def check_label(self):
@@ -144,14 +163,18 @@ class Calibrator(object):
         """
         if not self.is_ring_data:
             return
-        targetname = getkey(from_=self.pm.raw_cub,
-                            grp='instrument',
-                            keyword='targetname')
+        targetname = getkey(
+            from_=self.pm.raw_cub, grp="instrument", keyword="targetname"
+        )
 
-        if targetname.lower() != 'saturn':
-            editlab(from_=self.pm.raw_cub, options='modkey',
-                    keyword='TargetName', value='Saturn',
-                    grpname='Instrument')
+        if targetname.lower() != "saturn":
+            editlab(
+                from_=self.pm.raw_cub,
+                options="modkey",
+                keyword="TargetName",
+                value="Saturn",
+                grpname="Instrument",
+            )
 
     def parse_img_name(self, img_name):
         # Check if img_name is maybe a PathManager object with a `raw_label` attribute:
@@ -176,18 +199,24 @@ class Calibrator(object):
             output = self.pm.cubepath
         elif not Path(output).is_absolute():
             output = input_.with_name(output)
-        logger.info("Mapping %s to %s to resolution %i",
-                    input_, output, resolution)
-        ringscam2map(from_=input_, to=output, map=self.map_path, pixres='mpp',
-                     defaultrange='Camera', resolution=resolution)
-        tifname = output.with_suffix('.tif')
-        isis2std(from_=output, to=tifname, format='tiff')
+        logger.info("Mapping %s to %s to resolution %i", input_, output, resolution)
+        ringscam2map(
+            from_=input_,
+            to=output,
+            map=self.map_path,
+            pixres="mpp",
+            defaultrange="Camera",
+            resolution=resolution,
+        )
+        tifname = output.with_suffix(".tif")
+        isis2std(from_=output, to=tifname, format="tiff")
 
 
 def calibrate_many(images):
-    images = [[img_name, ] + file_variations(img_name, ['.cub', '.cal.cub',
-                                                        '.map.cal.cub'])
-              for img_name in images]
+    images = [
+        [img_name] + file_variations(img_name, [".cub", ".cal.cub", ".map.cal.cub"])
+        for img_name in images
+    ]
 
     with IsisPool() as isis_pool:
         for img_name, cub_name, cal_name, map_name in images:
