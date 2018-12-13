@@ -120,8 +120,11 @@ class RingCube(CubeFile):
 
     @property
     def meta_pixres(self):
-        if self.meta is not None:
-            return int(self.meta.mean_radial_res * 1000) * u.m / u.pix
+        meta = self.meta
+        cols = ["FINEST_RADIAL_RESOLUTION", "COARSEST_RADIAL_RESOLUTION"]
+        if meta is not None:
+            mean_radial_res = meta[cols].mean(axis=1)
+            return int(mean_radial_res * 1000) * u.m / u.pix
         else:
             return np.nan
 
@@ -249,17 +252,19 @@ class RingCube(CubeFile):
                 fig, ax = plt.subplots()
         else:
             fig = ax.get_figure()
-        im = ax.imshow(
-            data,
-            extent=extent_val,
-            cmap="gray",
-            vmin=min_,
-            vmax=max_,
-            interpolation=interpolation,
-            origin="lower",
-            aspect="auto",
-            **kwargs,
-        )
+
+        with quantity_support():
+            im = ax.imshow(
+                data,
+                extent=extent_val,
+                cmap="gray",
+                vmin=min_,
+                vmax=max_,
+                interpolation=interpolation,
+                origin="lower",
+                aspect="auto",
+                **kwargs,
+            )
         if any([rmin is not None, rmax is not None]):
             ax.set_ylim(rmin, rmax)
         self.mpl_im = im
@@ -445,4 +450,3 @@ class RingCube(CubeFile):
     @property
     def imagetime(self):
         return self.label["IsisCube"]["Instrument"]["ImageTime"]
-
