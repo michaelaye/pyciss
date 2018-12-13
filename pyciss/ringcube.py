@@ -5,8 +5,10 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import xarray as xr
 from astropy import units as u
+from astropy.visualization import quantity_support
 from skimage import exposure
 
 from pysis import CubeFile
@@ -48,6 +50,37 @@ def calc_4_3(width):
         Width of plotting window
     """
     return (width, 3 * width / 4)
+
+
+def mad(arr, relative=True):
+    """ Median Absolute Deviation: a "Robust" version of standard deviation.
+        Indices variabililty of the sample.
+        https://en.wikipedia.org/wiki/Median_absolute_deviation
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        med = np.nanmedian(arr, axis=1)
+        mad = np.nanmedian(np.abs(arr - med[:, np.newaxis]), axis=1)
+        if relative:
+            return mad / med
+        else:
+            return mad
+
+
+def calc_offset(cube):
+    """Calculate an offset.
+
+    Calculate offset from the side of data so that at least 200 image pixels are in the MAD stats.
+
+    Parameters
+    ==========
+    cube : pyciss.ringcube.RingCube
+        Cubefile with ring image
+    """
+    i = 0
+    while pd.Series(cube.img[:, i]).count() < 200:
+        i += 1
+    return max(i, 20)
 
 
 class RingCube(CubeFile):
@@ -250,6 +283,61 @@ class RingCube(CubeFile):
             logging.info("Created %s", fullpath)
         self.im = im
         return im
+
+    def imshow_swapped(self, ax=None, subtracted=False):
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        if subtracted is True:
+            self.use_original = False
+            data = self.density_wave_median_subtracted
+        else:
+            self.use_original = True
+            data = self.img
+
+        self.plotted_data = data
+
+        min_, max_ = self.plot_limits
+
+        ax.imshow(
+            data.T,
+            vmin=min_,
+            vmax=max_,
+            cmap="gray",
+            origin="lower",
+            extent=[*self.extent[2:], *self.extent[:2]],
+            aspect="auto",
+            interpolation=None,
+        )
+
+        ax.set_xlabel("Radius [Mm]")
+        ax.set_ylabel("Longitude [deg]")
+        ax.set_title(self.plot_title)
+
+        self.ax = ax
+
+    def plot_mad(self, ax=None, relative=True):
+        data = self.plotted_data
+
+        stats = mad(np.flip(data, axis=0), relative=relative)
+
+        if ax is None:
+            ax = self.ax
+        ax2 = ax.twinx()
+        ylabel = "relative MAD [%]" if relative else "absolute MAD * 100"
+        ax2.set_ylabel(ylabel)
+        off = calc_offset(self)
+        x_rad = np.linspace(self.minrad, self.maxrad, len(stats))
+        c = "green" if relative else None
+        ax2.plot(x_rad[off:-off], stats[::-1][off:-off] * 100, lw=1.5, color=c)
+        ax.tick_params(
+            axis="both",
+            direction="out",
+            length=6,
+            width=2,
+            grid_color="r",
+            grid_alpha=0.5,
+        )
 
     @property
     def plot_title(self):
