@@ -25,13 +25,16 @@ try:
 except ImportError:
     _SEABORN_INSTALLED = False
 else:
-    sns.set_context("notebook")
     sns.set_style("white")
 
 logger = logging.getLogger(__name__)
 
 resonances = get_all_resonances()
 meta_df = ring_summary_index()
+# add file_id column
+meta_df["file_id"] = meta_df.FILE_SPECIFICATION_NAME.map(
+    lambda x: Path(x).stem.split("_")[0]
+)
 
 
 def calc_4_3(width):
