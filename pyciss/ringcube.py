@@ -133,21 +133,33 @@ class RingCube(CubeFile):
 
     @property
     def meta_pixres(self):
-        meta = self.meta
-        cols = ["FINEST_RADIAL_RESOLUTION", "COARSEST_RADIAL_RESOLUTION"]
-        if meta is not None:
-            mean_radial_res = meta[cols].mean(axis=1)
-            return int(mean_radial_res * 1000) * u.m / u.pix
-        else:
-            return np.nan
+        if self._meta_pixres is None:
+            meta = self.meta
+            cols = ["FINEST_RADIAL_RESOLUTION", "COARSEST_RADIAL_RESOLUTION"]
+            if meta is not None and meta.size != 0:
+                mean_radial_res = meta[cols].mean(axis=1)
+                self._meta_pixres = int(mean_radial_res * 1000) * u.m / u.pix
+            else:
+                self._meta_pixres = np.nan
+        return self._meta_pixres
+
+    @meta_pixres.setter
+    def meta_pixres(self, value):
+        self._meta_pixres = value
 
     @property
     def meta_litstatus(self):
-        if self.meta is not None:
-            emang = self.meta.filter(regex="RING_EMISSION_ANGLE").mean(axis=1)
-            return "LIT" if emang.iat[0] < 90.0 else "UNLIT"
-        else:
-            return np.nan
+        if self._meta_litstatus is None:
+            if self.meta is not None:
+                emang = self.meta.filter(regex="RING_EMISSION_ANGLE").mean(axis=1)
+                self._meta_litstatus = "LIT" if emang.iat[0] < 90.0 else "UNLIT"
+            else:
+                self._meta_litstatus = "UNKNOWN"
+        return self._meta_litstatus
+
+    @meta_litstatus.setter
+    def meta_litstatus(self, value):
+        self._meta_litstatus = value
 
     @property
     def mapping_label(self):
