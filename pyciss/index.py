@@ -34,7 +34,7 @@ def read_cumulative_iss_index():
     "Read in the whole cumulative index and return dataframe."
     indexdir = get_index_dir()
 
-    path = indexdir / "cumindex.tab.hdf"
+    path = indexdir / "COISS_2999_index.hdf"
     try:
         df = pd.read_hdf(path, "df")
     except FileNotFoundError:
