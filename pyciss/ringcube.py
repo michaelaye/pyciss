@@ -320,10 +320,10 @@ class RingCube(CubeFile):
         if ax is None:
             fig, ax = plt.subplots()
 
-        if subtracted is True:
+        if data is None and subtracted is True:
             self.use_original = False
             data = self.density_wave_median_subtracted
-        else:
+        elif data is None:
             self.use_original = True
             data = self.img
 
@@ -341,6 +341,9 @@ class RingCube(CubeFile):
             aspect="auto",
             interpolation=None,
         )
+
+        if any([rmin is not None, rmax is not None]):
+            ax.set_xlim(rmin, rmax)
 
         ax.set_xlabel("Radius [Mm]")
         ax.set_ylabel("Longitude [deg]")
