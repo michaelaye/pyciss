@@ -84,7 +84,15 @@ def calc_offset(cube):
 
 
 class RingCube(CubeFile):
-    def __init__(self, fname, plot_limits=(0.1, 99), destriped=True, **kwargs):
+    def __init__(
+        self,
+        fname,
+        plot_limits=(0.1, 99),
+        destriped=True,
+        pixres=None,
+        litstatus=None,
+        **kwargs,
+    ):
         p = Path(fname)
         self.pm = PathManager(fname)
         if not p.is_absolute():
@@ -289,7 +297,9 @@ class RingCube(CubeFile):
         self.im = im
         return im
 
-    def imshow_swapped(self, ax=None, subtracted=False):
+    def imshow_swapped(
+        self, ax=None, data=None, subtracted=False, rmin=None, rmax=None
+    ):
         if ax is None:
             fig, ax = plt.subplots()
 
