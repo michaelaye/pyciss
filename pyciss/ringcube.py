@@ -9,6 +9,7 @@ import pandas as pd
 import xarray as xr
 from astropy import units as u
 from astropy.visualization import quantity_support
+from matplotlib.ticker import FormatStrFormatter, MaxNLocator
 from skimage import exposure
 
 from pysis import CubeFile
@@ -345,14 +346,10 @@ class RingCube(CubeFile):
         x_rad = np.linspace(self.minrad, self.maxrad, len(stats))
         c = "green" if relative else None
         ax2.plot(x_rad[off:-off], stats[::-1][off:-off] * 100, lw=1.5, color=c)
-        ax.tick_params(
-            axis="both",
-            direction="out",
-            length=6,
-            width=2,
-            grid_color="r",
-            grid_alpha=0.5,
-        )
+        ax2.ticklabel_format(style="plain", scilimits=(-2, 2), useOffset=False)
+        # locator = MaxNLocator(6, steps=[1, 2, 3, 4])
+        # ax2.yaxis.set_major_locator(locator)
+        ax2.yaxis.set_major_formatter(FormatStrFormatter("%6.3f"))
 
     @property
     def plot_title(self):
