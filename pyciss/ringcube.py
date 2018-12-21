@@ -107,8 +107,12 @@ class RingCube(CubeFile):
         try:
             q = f"file_id == '{self.pm.img_id}'"
             self.meta = meta_df.query(q)
+            if self.meta.size == 0:
+                logging.warn("Image ID not found in meta-data index.")
         except KeyError:
             self.meta = None
+        self._meta_pixres = pixres
+        self._meta_litstatus = litstatus
         self.resonance_axis = None
         self.pmin, self.pmax = plot_limits
         self._plotted_data = None
