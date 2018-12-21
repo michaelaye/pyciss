@@ -27,7 +27,7 @@ try:
 except ImportError:
     _SEABORN_INSTALLED = False
 else:
-    sns.set_style("white")
+    sns.set_style("white", {"xtick.bottom": True, "ytick.left": True})
 
 logger = logging.getLogger(__name__)
 
