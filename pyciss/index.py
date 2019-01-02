@@ -77,7 +77,10 @@ def read_ring_images_index():
 def get_clearnacs_ring_images():
     df = read_ring_images_index()
     df[df == -1e32] = np.nan
-    df = df.set_index("isotime")
+    try:
+        df = df.set_index("isotime")
+    except KeyError:
+        print("'isotime' column does not exist. Leaving index as it is.")
     ringimages = df.query("RINGS_FLAG=='YES'")
     ringimages = ringimages[ringimages.MAXIMUM_RING_RADIUS.notnull()]
     ringimages = ringimages[ringimages.MINIMUM_RING_RADIUS.notnull()]
