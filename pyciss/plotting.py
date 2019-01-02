@@ -237,7 +237,6 @@ def resonance_plot(img_id, ax=None, cube=None,
     ax[1].set_xlabel('Radius [Mm]')
     ax[1].set_ylabel('I/F')
 
-    fig.tight_layout()
     if saveroot is not None:
         savepath = f"{cube.pm.img_id}_{res_name.replace(':', '_')}.png"
         root = Path(saveroot)
