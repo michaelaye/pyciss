@@ -22,7 +22,7 @@ setup(
     version="0.11.0",
     packages=find_packages(),
 
-    install_requires=['pandas', 'numpy', 'matplotlib', 'pysis', 'astropy'],
+    install_requires=['pandas', 'numpy', 'matplotlib', 'pysis', 'astropy', 'xarray'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
 
