@@ -288,8 +288,7 @@ def resonance_plot(
     else:
         res_name = "no_janus_res"
 
-    ifs = np.nanmedian(cube.img, axis=1)
-    ifs = np.nan_to_num(ifs)
+    ifs = np.nan_to_num(cube.median_profile)
     ifs[ifs < 0] = 0
     ax[1].plot(
         np.linspace(*cube.extent[2:], cube.img.shape[0]), ifs, color="white", lw=1
