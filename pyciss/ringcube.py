@@ -3,13 +3,16 @@ import logging
 import warnings
 from pathlib import Path
 
+import holoviews as hv
+import hvplot.pandas
+import hvplot.xarray
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
 from astropy import units as u
 from astropy.visualization import quantity_support
-from matplotlib.ticker import FormatStrFormatter, MaxNLocator
+from matplotlib.ticker import FormatStrFormatter
 from skimage import exposure
 
 from pysis import CubeFile
@@ -116,6 +119,11 @@ class RingCube(CubeFile):
         self.resonance_axis = None
         self.pmin, self.pmax = plot_limits
         self._plotted_data = None
+        self._xarray = self.to_xarray()
+
+    @property
+    def xarray(self):
+        return self._xarray
 
     def get_opus_meta_data(self):
         print("Getting metadata from the online OPUS database.")
@@ -228,16 +236,25 @@ class RingCube(CubeFile):
     def plot_limits(self):
         return self.calc_clim(self.plotted_data)
 
-    def to_xarray(self):
+    def to_xarray(self, subtracted=False):
         radii = np.linspace(self.minrad, self.maxrad, self.img.shape[0])
         azimuths = np.linspace(self.minlon, self.maxlon, self.img.shape[1])
+        if subtracted:
+            imgdata = self.density_wave_median_subtracted.T
+        else:
+            imgdata = self.img.T
         data = xr.DataArray(
-            self.img,
-            coords={"radius": radii, "azimuth": azimuths},
-            dims=("radius", "azimuth"),
+            imgdata,
+            coords={"azimuth": azimuths, "radius": radii},
+            dims=("azimuth", "radius"),
         )
-        vmin, vmax = self.plot_limits
-        return data.where((data > vmin) & (data < vmax))
+        if not subtracted:
+            return data
+            vmin, vmax = self.plot_limits
+            min_filtered = data.where(data > vmin, vmin)
+            return min_filtered.where(min_filtered < vmax)
+        else:
+            return data
 
     def imshow(
         self,
@@ -260,12 +277,15 @@ class RingCube(CubeFile):
         """
         if data is None:
             data = self.img
-        self.plotted_data = data
         if self.resonance_axis is not None:
             logger.debug("removing resonance_axis")
             self.resonance_axis.remove()
         if equalized:
-            data = exposure.equalize_hist(np.nan_to_num(data))
+            data = np.nan_to_num(data)
+            data[data < 0] = 0
+            data = exposure.equalize_hist(data)
+        self.plotted_data = data
+
         extent_val = self.extent if set_extent else None
         min_, max_ = self.plot_limits
         self.min_ = min_
@@ -476,3 +496,63 @@ class RingCube(CubeFile):
     @property
     def imagetime(self):
         return self.label["IsisCube"]["Instrument"]["ImageTime"]
+
+    @property
+    def statsdf(self):
+        df = pd.DataFrame(self.xarray.median(axis=0).values, index=self.xarray.radius)
+        df.columns = ["median_az"]
+        df["mad"] = mad(self.img, relative=False)
+        df["amin"] = df.median_az - df["mad"]
+        df["amax"] = df.median_az + df["mad"]
+        return df
+
+    @property
+    def relmad(self):
+        return mad(self.img, relative=True)
+
+    @property
+    def absmad(self):
+        return mad(self.img, relative=False)
+
+    @property
+    def median_az(self):
+        return self.xarray.median(axis=0)
+
+    @property
+    def xdataset(self):
+        ds = xr.Dataset({"img": self.xarray,
+                         "sub": self.to_xarray(subtracted=True),
+                         "absmad": ("radius", self.absmad),
+                         "relmad": ("radius", self.relmad),
+                         "median_az": ("radius", self.median_az),
+                         "amin": ("radius", self.median_az - self.absmad),
+                         "amax": ("radius", self.median_az + self.absmad)})
+        return ds
+
+    @property
+    def imgplot(self):
+        xarr = self.xarray
+        hvimg = xarr.hvplot(cmap="gray", title=self.plot_title, clim=tuple(self.plot_limits))
+        hvimg = hvimg.redim.label(azimuth="Ring Azimuth", radius='Radius')
+        return hvimg.redim.unit(azimuth='deg', radius='Mm')
+
+    @property
+    def imgplotsubbed(self):
+        xarr = self.to_xarray(subtracted=True)
+        return xarr.hvplot(cmap="gray", title=self.plot_title)
+
+    @property
+    def profile_plot(self):
+        df = self.statsdf
+        profile = df.hvplot.area("radius", "amin", "amax") * df.median_az.hvplot(
+            color="r", title="Median +/- MAD"
+        )
+        return profile
+
+    @property
+    def img_and_profile_plot(self):
+        return hv.Layout(self.imgplot + self.profile_plot).cols(1)
+
+    @property
+    def imgsubbed_and_profile_plot(self):
+        return hv.Layout(self.imgplotsubbed + self.profile_plot).cols(1)
