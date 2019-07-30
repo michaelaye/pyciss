@@ -22,7 +22,7 @@ setup(
     version="0.12.6",
     packages=find_packages(),
 
-    install_requires=['pandas', 'numpy', 'matplotlib', 'pysis', 'astropy', 'xarray', 'holoviews', 'hvplot', 'seaborn', 'tables', 'planetpy'],
+    install_requires=['pandas', 'numpy', 'matplotlib', 'pysis', 'astropy', 'xarray', 'holoviews', 'hvplot', 'seaborn', 'tables', 'planetpy', 'scikit-image'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
 
