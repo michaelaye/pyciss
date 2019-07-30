@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from planetpy.pdstools import indices
+from planetarypy.pdstools import indices
 
 from ._utils import which_epi_janus_resonance
 from .io import config
