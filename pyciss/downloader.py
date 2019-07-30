@@ -5,7 +5,12 @@ import subprocess
 import time
 from ipyparallel import Client
 
-from . import io, opusapi, pipeline
+from . import io, opusapi
+
+try:
+    import pipeline
+except ImportError:
+    pass
 
 logger = logging.getLogger(__name__)
 
